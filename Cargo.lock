@@ -77,6 +77,13 @@ name = "cice"
 version = "0.1.0"
 
 [[package]]
+name = "cice-controller"
+version = "0.1.0"
+dependencies = [
+ "libvnc",
+]
+
+[[package]]
 name = "cice-core"
 version = "0.1.0"
 
@@ -86,13 +93,6 @@ version = "0.1.0"
 
 [[package]]
 name = "cice-driver"
-version = "0.1.0"
-dependencies = [
- "libvnc",
-]
-
-[[package]]
-name = "cice-judge"
 version = "0.1.0"
 dependencies = [
  "opencv",

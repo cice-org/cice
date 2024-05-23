@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "cice-judge"
+name = "cice-controller"
 version = "0.1.0"
