@@ -1,2 +1,3 @@
 [workspace]
 members = ["cice", "cice-core", "cice-debug", "cice-driver", "cice-judge"]
+resolver = "2"
