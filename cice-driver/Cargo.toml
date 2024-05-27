@@ -4,4 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-opencv = { version = "0.91.3", features = ["clang-runtime"] }
+opencv = { version = "0.91.3", features = ["clang-runtime"], optional = true }
+
+[features]
+default = ["image"]
+image = ["opencv"]
