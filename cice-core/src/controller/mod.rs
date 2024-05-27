@@ -1,3 +1,1 @@
-pub trait Controller{
-    
-}
+pub trait Controller {}
