@@ -120,6 +120,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmake"
+version = "0.1.50"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a31c789563b815f77f4250caee12365734369f942439b7defd71e18a48197130"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "dunce"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -204,9 +213,9 @@ dependencies = [
 
 [[package]]
 name = "libvnc"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "594f1c53d3174651bc21cc2eaaea6abb60f6e82e713d1e3c1cc59a4c0f75f7c0"
+checksum = "f0361b303efb1a715f6d9b98179d263e8c2e74efe5629a1915ffa1443fa07505"
 dependencies = [
  "libvnc-sys",
  "log",
@@ -214,12 +223,13 @@ dependencies = [
 
 [[package]]
 name = "libvnc-sys"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb51a2756955f81003063354fd5d381c7835f7d13b2fc523014b609da8370802"
+checksum = "8399305e393bfa13b9974237b72a5190c41b0c65c4355df1ce7ac381bf75f775"
 dependencies = [
  "bindgen",
  "cc",
+ "cmake",
  "pkg-config",
 ]
 
