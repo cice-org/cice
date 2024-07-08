@@ -1,3 +1,10 @@
 [workspace]
-members = ["cice", "cice-core", "cice-debug", "cice-driver", "cice-controller", "cice-lang"]
+members = [
+    "cice",
+    "cice-core",
+    "cice-debug",
+    "cice-recognizer",
+    "cice-controller",
+    "cice-lang",
+]
 resolver = "2"
