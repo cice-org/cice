@@ -34,7 +34,11 @@ impl<E, T> ConstGraph<E, T> {
             item.resize_with(self.nodes.len(), || None);
         }
         self.graph.push(vec![None; self.nodes.len()]);
-        return next_index;
+        next_index
+    }
+
+    pub(crate) fn next_node_index(&self) -> usize {
+        self.graph.len()
     }
 
     /// ## Safety
@@ -77,13 +81,13 @@ impl<E, T> ConstGraph<E, T> {
     }
 
     pub(crate) fn get_out_edges(&self, index: NodeIndex) -> Vec<EdgeIndex> {
-        let mut ret = vec![];
-        for item in self.graph.get(index).unwrap() {
-            if let Some(edge) = item {
-                ret.push(*edge);
-            }
-        }
-        ret
+        self.graph
+            .get(index)
+            .unwrap()
+            .iter()
+            .flatten()
+            .copied()
+            .collect()
     }
 
     pub(crate) fn get_subnodes(&self, index: NodeIndex) -> Vec<NodeIndex> {
