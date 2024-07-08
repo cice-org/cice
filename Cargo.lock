@@ -92,15 +92,15 @@ name = "cice-debug"
 version = "0.1.0"
 
 [[package]]
-name = "cice-driver"
+name = "cice-lang"
+version = "0.1.0"
+
+[[package]]
+name = "cice-recognizer"
 version = "0.1.0"
 dependencies = [
  "opencv",
 ]
-
-[[package]]
-name = "cice-lang"
-version = "0.1.0"
 
 [[package]]
 name = "clang"
