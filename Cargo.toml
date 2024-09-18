@@ -6,7 +6,5 @@ members = [
     "cice-recognizer",
     "cice-controller",
     "cice-lang",
-    # Fuzz test crate
-    "cice-core/fuzz",
 ]
 resolver = "2"
