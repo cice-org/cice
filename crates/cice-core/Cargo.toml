@@ -4,3 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+euclid = { version = "0.22.11", default-features = false, features = ["libm"] }
