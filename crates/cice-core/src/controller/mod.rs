@@ -3,17 +3,15 @@ pub mod input;
 /// Fetch data from target device. Such as screen capture
 pub mod output;
 use alloc::string::String;
-use core::error::Error;
 use input::InputController;
 use output::OutputController;
 
 pub trait Controller {
-    type Error: Error;
     fn name(&self) -> String;
-    fn ext_input(&self) -> Option<InputControllerOps<Self>> {
+    fn ext_input(&self) -> Option<InputControllerOps> {
         None
     }
-    fn ext_output(&self) -> Option<OutputControllerOps<Self>> {
+    fn ext_output(&self) -> Option<OutputControllerOps> {
         None
     }
 }
@@ -22,7 +20,7 @@ pub trait Controller {
 macro_rules! define_controller {
     ($exttrait:ident , $extname:ident) => {
         #[allow(missing_docs)]
-        pub type $extname<'a, T> = &'a mut dyn $exttrait<Error = <T as Controller>::Error>;
+        pub type $extname<'a> = &'a mut dyn $exttrait;
     };
 }
 

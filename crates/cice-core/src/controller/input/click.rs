@@ -1,8 +1,6 @@
-use crate::controller::Controller;
-use core::time::Duration;
+use alloc::boxed::Box;
+use core::{error::Error, time::Duration};
 use euclid::Point2D;
-
-use crate::define_controller;
 
 use super::{InputController, Px};
 
@@ -11,7 +9,5 @@ pub trait ClickController: InputController {
         &mut self,
         pos: Point2D<usize, Px>,
         duration: Option<Duration>,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), Box<dyn Error>>;
 }
-
-

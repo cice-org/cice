@@ -1,5 +1,6 @@
 use alloc::collections::vec_deque::VecDeque;
 
+use crate::controller::Controller;
 use crate::pipeline::Pipeline;
 use crate::task::Task;
 
@@ -19,6 +20,7 @@ impl Context {
             task.run_with_context(self);
         }
     }
+    pub fn insert_controller<C: Controller>(&self, controller: C) {}
 }
 
 impl Default for Context {

@@ -9,13 +9,13 @@ pub mod swipe;
 pub mod text;
 type Px = ();
 pub trait InputController: Controller {
-    fn ext_click(&mut self) -> Option<ClickControllerOps<Self>> {
+    fn ext_click(&mut self) -> Option<ClickControllerOps> {
         None
     }
-    fn ext_swipe(&mut self) -> Option<ClickControllerOps<Self>> {
+    fn ext_swipe(&mut self) -> Option<SwipeControllerOps> {
         None
     }
-    fn ext_text(&mut self) -> Option<TextControllerOps<Self>> {
+    fn ext_text(&mut self) -> Option<TextControllerOps> {
         None
     }
 }
