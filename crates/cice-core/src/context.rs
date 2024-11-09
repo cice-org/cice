@@ -1,24 +1,31 @@
-use alloc::collections::vec_deque::VecDeque;
-
 use crate::controller::Controller;
 use crate::pipeline::Pipeline;
-use crate::task::Task;
+use crate::task::{Task, TaskData, TaskError, TaskId};
+use std::collections::HashMap;
 
 pub struct Context {
-    task_list: VecDeque<Task>,
+    pipeline: Pipeline,
+    tasks: HashMap<TaskId, Task>,
 }
 
 impl Context {
     pub fn new() -> Context {
         Self {
-            task_list: VecDeque::new(),
+            pipeline: Pipeline::new(),
+            tasks: HashMap::new(),
         }
     }
-    pub fn run(&mut self, entry: Task) {
-        self.task_list.push_back(entry);
-        while let Some(task) = self.task_list.pop_front() {
-            task.run_with_context(self);
+    pub async fn run(&self, entry: TaskId) -> Result<(), TaskError> {
+        if let Some(task) = self.tasks.get(&entry) {
+            return self.pipeline.run_pipeline(task.clone(), &self).await;
+        } else {
+            log::error!("Entry Task {entry} not found");
+            return Err(TaskError::UnknownTask(entry));
         }
+    }
+    pub fn insert_task(&mut self, task_data: impl TaskData) {
+        self.tasks
+            .insert(task_data.base_data().task_name, task_data.into());
     }
     pub fn insert_controller<C: Controller>(&self, controller: C) {}
 }

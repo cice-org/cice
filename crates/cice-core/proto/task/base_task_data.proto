@@ -1,0 +1,10 @@
+syntax = "proto3";
+package task;
+
+message base_task_data {
+  string task_name = 1;
+  repeated string next_task = 2;
+  repeated string interrupt_task = 3;
+  string controller_id = 4;
+  optional string recognizer_id = 5;
+}

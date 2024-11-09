@@ -33,6 +33,7 @@
               opencv
               cmake
               pkg-config
+              protobuf
             ];
 
             env = {
