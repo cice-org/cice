@@ -6,5 +6,5 @@ message base_task_data {
   repeated string next_task = 2;
   repeated string interrupt_task = 3;
   string controller_id = 4;
-  optional string recognizer_id = 5;
+  string recognizer_id = 5;
 }
