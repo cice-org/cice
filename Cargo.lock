@@ -103,9 +103,7 @@ dependencies = [
  "log",
  "prost",
  "prost-build",
- "prost-types",
  "serde",
- "serde_derive",
  "serde_json",
 ]
 
