@@ -15,6 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Nightly Rust Toolchain
         run: rustup update nightly
+      - name: Install Dependencies
+        run: script/dependency/protobuf/install.sh
+        shell: bash
       - name: Build
         run: cargo build -p cice-core --verbose
       - name: Clippy
