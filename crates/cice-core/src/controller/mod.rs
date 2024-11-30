@@ -2,12 +2,19 @@
 pub mod input;
 /// Fetch data from target device. Such as screen capture
 pub mod output;
+use core::error::Error;
+
 use alloc::string::String;
 use input::InputController;
 use output::OutputController;
 
+use crate::resource::ResourceData;
+
+pub type ControllerId = String;
+
 pub trait Controller {
-    fn name(&self) -> String;
+    fn name(&self) -> ControllerId;
+    fn exec(&self, resourece: &ResourceData) -> Result<(), Box<dyn Error>>;
     fn ext_input(&self) -> Option<InputControllerOps> {
         None
     }

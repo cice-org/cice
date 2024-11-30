@@ -1,0 +1,9 @@
+{
+    "base_data":{
+        "task_name":"next",
+        "next_task":[],
+        "interrupt_task":[],
+        "controller_id":"",
+        "recognizer_id":""
+    }
+}

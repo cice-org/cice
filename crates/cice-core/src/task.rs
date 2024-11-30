@@ -41,7 +41,7 @@ pub trait TaskData {
     fn base_data(&self) -> BaseTaskData;
     fn controller_config(&self) -> ResourceData;
     fn recognizer_config(&self) -> Option<ResourceData>;
-}   
+}
 
 impl TaskData for ResourceData {
     fn controller_config(&self) -> ResourceData {
