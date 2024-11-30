@@ -7,4 +7,5 @@ edition = "2021"
 libvnc = { version = "0.1.4", optional = true }
 
 [features]
+default = ["full"]
 full = ["libvnc"]
