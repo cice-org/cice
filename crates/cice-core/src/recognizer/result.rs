@@ -1,3 +1,1 @@
-pub trait ReconizeResult{
-    
-}
+pub trait ReconizeResult {}

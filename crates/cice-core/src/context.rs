@@ -49,7 +49,7 @@ impl Context {
         for controller in controllers {
             self.insert_controller(controller);
         }
-    }       
+    }
 
     pub fn insert_recognizer(&mut self, recognizer: Box<dyn Recognizer>) {
         self.reconizers.insert(recognizer.name(), recognizer.into());
