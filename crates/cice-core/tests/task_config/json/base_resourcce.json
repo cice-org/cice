@@ -1,6 +1,6 @@
 {
     "base_data":{
-        "task_name":"next",
+        "task_name":"test",
         "next_task":[],
         "interrupt_task":[],
         "controller_id":"",
