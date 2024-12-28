@@ -11,9 +11,9 @@ pub type RecognizerId = String;
 
 pub trait Recognizer {
     fn name(&self) -> RecognizerId;
+    fn init(&self, resource: &ResourceData) -> Result<(), Box<dyn Error>>;
     fn exec(
         &self,
         action: &dyn RecognizerAction,
-        resource: &ResourceData,
     ) -> Result<Box<dyn ReconizeResult>, Box<dyn Error>>;
 }

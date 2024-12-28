@@ -1,0 +1,6 @@
+{
+    "controller":{
+        "id":"test_controller",
+        "port": "5690"
+    }
+}

@@ -2,6 +2,7 @@ use core::error::Error;
 
 use alloc::{boxed::Box, string::String, vec::Vec};
 
+//TODO: make it easier to be used. There is no need for the caller to care about how to deserialize the data actually.
 pub enum ResourceData {
     Json(String),
     Proto(Vec<u8>),

@@ -1,13 +1,39 @@
 use crate::controller::{Controller, ControllerId};
 use crate::pipeline::Pipeline;
-use crate::recognizer::{self, Recognizer, RecognizerId};
+use crate::recognizer::{Recognizer, RecognizerId};
+use crate::resource::ResourceData;
 use crate::task::{Task, TaskData, TaskError, TaskId};
+use std::borrow::Borrow;
 use std::collections::HashMap;
+
+struct ControllerWrapper {
+    controller: Box<dyn Controller>,
+    config: ResourceData,
+    initialized: bool,
+}
+
+impl ControllerWrapper {
+    fn new(controller: Box<dyn Controller>, config: ResourceData) -> Self {
+        Self {
+            controller,
+            config,
+            initialized: false,
+        }
+    }
+
+    fn controller(&self) -> Option<&dyn Controller> {
+        if self.initialized {
+            return Some(self.controller.borrow());
+        } else {
+            return None;
+        }
+    }
+}
 
 pub struct Context {
     pipeline: Pipeline,
     tasks: HashMap<TaskId, Task>,
-    controllers: HashMap<ControllerId, Box<dyn Controller>>,
+    controllers: HashMap<ControllerId, ControllerWrapper>,
     reconizers: HashMap<RecognizerId, Box<dyn Recognizer>>,
 }
 
@@ -40,12 +66,18 @@ impl Context {
         }
     }
 
-    pub fn insert_controller(&mut self, controller: Box<dyn Controller>) {
-        self.controllers
-            .insert(controller.name(), controller.into());
+    /// # Params
+    /// - controller: (Box<dyn Controller>, ResourceData) controller and its config resource data
+    pub fn insert_controller(&mut self, controller: (Box<dyn Controller>, ResourceData)) {
+        self.controllers.insert(
+            controller.0.name(),
+            ControllerWrapper::new(controller.0, controller.1),
+        );
     }
 
-    pub fn inert_controllers(&mut self, controllers: Vec<Box<dyn Controller>>) {
+    /// # Prams
+    /// - controllers: Vec<Box<dyn Controller>> controllers and their config resource data
+    pub fn inert_controllers(&mut self, controllers: Vec<(Box<dyn Controller>, ResourceData)>) {
         for controller in controllers {
             self.insert_controller(controller);
         }

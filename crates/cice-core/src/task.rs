@@ -1,5 +1,4 @@
 use core::cell::RefCell;
-use std::fmt::Result;
 
 use alloc::{rc::Rc, string::String, vec::Vec};
 
@@ -28,7 +27,7 @@ impl Task {
 }
 
 impl<T: TaskData> From<T> for Task {
-    fn from(value: T) -> Self {
+    fn from(value: T) -> Self {   
         Self(Rc::new(RefCell::new(TaskInner {
             base_data: value.base_data(),
             controller_config: value.controller_config(),

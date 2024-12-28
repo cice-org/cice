@@ -1,0 +1,4 @@
+syntax = "proto3";
+package config;
+
+message base_recognizer_config { string id = 1; }

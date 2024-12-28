@@ -6,3 +6,4 @@ pub mod pipeline;
 pub mod recognizer;
 pub mod resource;
 pub mod task;
+pub mod config;

@@ -12,9 +12,13 @@ use crate::resource::ResourceData;
 
 pub type ControllerId = String;
 
+/// Controller is a trait that defines the behavior of a controller
+///
+/// ## Tips
+/// - Controller is lazy initialized, which means the controller will be initialized when it is used for the first time
 pub trait Controller {
     fn name(&self) -> ControllerId;
-    fn exec(&self, resourece: &ResourceData) -> Result<(), Box<dyn Error>>;
+    fn init(&self, init_cofig: &ResourceData) -> Result<(), Box<dyn Error>>;
     fn ext_input(&self) -> Option<InputControllerOps> {
         None
     }
@@ -27,7 +31,7 @@ pub trait Controller {
 macro_rules! define_controller {
     ($exttrait:ident , $extname:ident) => {
         #[allow(missing_docs)]
-        pub type $extname<'a> = &'a mut dyn $exttrait;
+        pub type $extname<'a> = &'a dyn $exttrait;
     };
 }
 
