@@ -1,18 +1,19 @@
-use cice_core::task::{BaseTaskData, TaskData};
+use cice_core::{config::BaseTaskConfig, task::TaskData};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 #[derive(Serialize, Deserialize)]
 pub struct TestTaskData {
-    base_data: BaseTaskData,
+    base: BaseTaskConfig,
 }
 
 impl TaskData for TestTaskData {
-    fn base_data(&self) -> cice_core::task::BaseTaskData {
-        return self.base_data.clone();
+    fn base_data(&self) -> BaseTaskConfig {
+        return self.base.clone();
     }
 
     fn controller_config(&self) -> cice_core::resource::ResourceData {
-        return cice_core::resource::ResourceData::Json("".to_string());
+        return json!({});
     }
 
     fn recognizer_config(&self) -> Option<cice_core::resource::ResourceData> {

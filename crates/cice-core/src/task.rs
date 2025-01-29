@@ -3,13 +3,9 @@ use core::cell::RefCell;
 use alloc::{rc::Rc, string::String, vec::Vec};
 
 use crate::{
-    context::Context,
-    controller::Controller,
-    recognizer::Recognizer,
-    resource::{ResourceData, ResourceError},
+    config::BaseTaskConfig, context::Context, controller::Controller, recognizer::Recognizer,
+    resource::ResourceData,
 };
-
-include!(concat!(env!("OUT_DIR"), "/task.rs"));
 
 pub type TaskId = String;
 
@@ -18,7 +14,7 @@ pub type TaskId = String;
 pub struct Task(Rc<RefCell<TaskInner>>);
 
 pub struct TaskInner {
-    base_data: BaseTaskData,
+    base: BaseTaskConfig,
     controller_config: ResourceData,
     recognizer_config: Option<ResourceData>,
 }
@@ -27,9 +23,9 @@ impl Task {
 }
 
 impl<T: TaskData> From<T> for Task {
-    fn from(value: T) -> Self {   
+    fn from(value: T) -> Self {
         Self(Rc::new(RefCell::new(TaskInner {
-            base_data: value.base_data(),
+            base: value.base_data(),
             controller_config: value.controller_config(),
             recognizer_config: value.recognizer_config(),
         })))
@@ -37,7 +33,7 @@ impl<T: TaskData> From<T> for Task {
 }
 
 pub trait TaskData {
-    fn base_data(&self) -> BaseTaskData;
+    fn base_data(&self) -> BaseTaskConfig;
     fn controller_config(&self) -> ResourceData;
     fn recognizer_config(&self) -> Option<ResourceData>;
 }
@@ -51,7 +47,7 @@ impl TaskData for ResourceData {
         todo!()
     }
 
-    fn base_data(&self) -> BaseTaskData {
+    fn base_data(&self) -> BaseTaskConfig {
         todo!()
     }
 }

@@ -1,4 +1,0 @@
-syntax = "proto3";
-package config;
-
-message base_controller_config { string id = 1; }

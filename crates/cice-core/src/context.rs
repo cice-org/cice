@@ -67,7 +67,7 @@ impl Context {
     }
 
     /// # Params
-    /// - controller: (Box<dyn Controller>, ResourceData) controller and its config resource data
+    /// - controller: (controller: Box<dyn Controller>, controller_config: ResourceData) controller and its config resource data
     pub fn insert_controller(&mut self, controller: (Box<dyn Controller>, ResourceData)) {
         self.controllers.insert(
             controller.0.name(),

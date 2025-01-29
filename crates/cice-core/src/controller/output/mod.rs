@@ -1,14 +1,12 @@
 use super::Controller;
-use crate::action::controller::output::ControllerOutputAction;
-use image::ImageOutput;
-use std::error::Error;
+use crate::define_controller;
+use image::ImageOutputController;
 
 pub mod image;
 
-pub enum OutputData {
-    Image(ImageOutput),
-}
-
 pub trait OutputController: Controller {
-    fn exec(&self, output_action: ControllerOutputAction) -> Result<OutputData, Box<dyn Error>>;
+    fn ext_image(&self) -> Option<ImageOutputControllerOps> {
+        None
+    }
 }
+define_controller!(ImageOutputController, ImageOutputControllerOps);

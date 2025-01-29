@@ -3,20 +3,12 @@ pub mod controller;
 pub mod recognizer;
 pub mod task;
 
-use cice_core::{
-    action::Action,
-    task::{BaseTaskData, TaskData},
-};
 use controller::TestControllerConfig;
-use recognizer::TestRecognizerConfig;
-use serde::{Deserialize, Serialize};
+use recognizer::TestImageRecognizerConfig;
 
 
-
-#[derive(serde::Serialize, serde::Deserialize, ::prost::Message)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct TestConfig {
-    #[prost(message, optional, tag = "1")]
     pub controller: Option<TestControllerConfig>,
-    #[prost(message, optional, tag = "2")]
-    pub recognizer: Option<TestRecognizerConfig>,
+    pub recognizer: Option<TestImageRecognizerConfig>,
 }

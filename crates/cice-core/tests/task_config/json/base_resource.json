@@ -1,9 +1,9 @@
 {
-    "base_data":{
-        "task_name":"test",
-        "next_task":[],
-        "interrupt_task":[],
-        "controller_id":"",
-        "recognizer_id":""
+    "base": {
+        "task_name": "test",
+        "next_task": [],
+        "interrupt_task": [],
+        "controller_id": "",
+        "recognizer_id": ""
     }
 }

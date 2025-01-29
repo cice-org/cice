@@ -1,11 +1,17 @@
-use cice_core::{config::BaseControllerConfig, controller::Controller, resource::ResourceData};
+use cice_core::{
+    config::BaseControllerConfig,
+    controller::{
+        input::InputController,
+        output::{image::ImageOutputController, OutputController},
+        Controller,
+    },
+    resource::ResourceData,
+};
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct TestControllerConfig {
-    #[prost(message, optional, tag = "1")]
     pub base: Option<BaseControllerConfig>,
-    #[prost(string, tag = "2")]
-    pub port: ::prost::alloc::string::String,
+    pub port: String,
 }
 
 pub struct TestController {}
@@ -24,18 +30,32 @@ impl Controller for TestController {
     fn init(
         &self,
         resource: &cice_core::resource::ResourceData,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        match resource {
-            cice_core::resource::ResourceData::Json(json) => {
-                let config: TestControllerConfig = serde_json::from_str(json)?;
-                println!("port: {}", config.port);
-                Ok(())
-            }
-            ResourceData::Proto(data) => {
-                let config: TestControllerConfig = prost::Message::decode(data.as_slice())?;
-                println!("port: {}", config.port);
-                Ok(())
-            }
-        }
+    ) -> Result<(), Box<dyn core::error::Error>> {
+        let config: TestControllerConfig = serde_json::from_value(resource.clone())?;
+        println!("port: {}", config.port);
+        Ok(())
+    }
+    fn ext_input(&self) -> Option<cice_core::controller::InputControllerOps> {
+        Some(self)
+    }
+    fn ext_output(&self) -> Option<cice_core::controller::OutputControllerOps> {
+        Some(self)
     }
 }
+
+impl InputController for TestController {
+    fn exec(&self, input_action: &ResourceData) -> Result<(), Box<dyn std::error::Error>> {
+        todo!()
+    }
+}
+
+impl ImageOutputController for TestController {
+    fn exec(
+        &self,
+        output_action: &ResourceData,
+    ) -> Result<cice_core::controller::output::image::ImageOutput, Box<dyn std::error::Error>> {
+        todo!()
+    }
+}
+
+impl OutputController for TestController {}
