@@ -1,9 +1,10 @@
+use async_trait::async_trait;
 use cice_core::{
     config::BaseControllerConfig,
     controller::{
         input::InputController,
         output::{image::ImageOutputController, OutputController},
-        Controller,
+        Controller, ControllerError, CustomControllerError,
     },
     resource::ResourceData,
 };
@@ -27,11 +28,13 @@ impl Controller for TestController {
         return "text_controller".into();
     }
 
-    fn init(
-        &self,
-        resource: &cice_core::resource::ResourceData,
-    ) -> Result<(), Box<dyn core::error::Error>> {
-        let config: TestControllerConfig = serde_json::from_value(resource.clone())?;
+    fn init(&self, resource: &cice_core::resource::ResourceData) -> Result<(), ControllerError> {
+        let config: TestControllerConfig =
+            serde_json::from_value(resource.clone()).map_err(|e| ControllerError::Err {
+                source: CustomControllerError::Common {
+                    source: Box::new(e),
+                },
+            })?;
         println!("port: {}", config.port);
         Ok(())
     }
@@ -43,17 +46,19 @@ impl Controller for TestController {
     }
 }
 
+#[async_trait]
 impl InputController for TestController {
-    fn exec(&self, input_action: &ResourceData) -> Result<(), Box<dyn std::error::Error>> {
+    async fn exec(&self, input_action: &ResourceData) -> Result<(), CustomControllerError> {
         todo!()
     }
 }
 
+#[async_trait]
 impl ImageOutputController for TestController {
-    fn exec(
+    async fn exec(
         &self,
         output_action: &ResourceData,
-    ) -> Result<cice_core::controller::output::image::ImageOutput, Box<dyn std::error::Error>> {
+    ) -> Result<cice_core::controller::output::image::ImageOutput, CustomControllerError> {
         todo!()
     }
 }

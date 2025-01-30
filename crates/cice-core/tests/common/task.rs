@@ -19,4 +19,12 @@ impl TaskData for TestTaskData {
     fn recognizer_config(&self) -> Option<cice_core::resource::ResourceData> {
         return None;
     }
+
+    fn controller_output_action(&self) -> Option<cice_core::resource::ResourceData> {
+        None
+    }
+
+    fn recognizer_action(&self) -> cice_core::resource::ResourceData {
+        return json!({});
+    }
 }

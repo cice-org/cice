@@ -1,9 +1,14 @@
-use core::error::Error;
+use async_trait::async_trait;
 
-use crate::resource::ResourceData;
+use crate::{controller::output::image::ImageOutput, resource::ResourceData};
 
-use super::{RecognizeResult, Recognizer};
+use super::{CustomRecognizerError, RecognizeResult, Recognizer};
 
+#[async_trait]
 pub trait ImageRecognizer: Recognizer {
-    fn exec(&self, action: &ResourceData) -> Result<RecognizeResult, Box<dyn Error>>;
+    async fn exec(
+        &self,
+        action: &ResourceData,
+        data: ImageOutput,
+    ) -> Result<RecognizeResult, CustomRecognizerError>;
 }

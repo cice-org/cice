@@ -20,6 +20,8 @@ impl Pipeline {
         entry: Task,
         context: &Context,
     ) -> Result<(), TaskError> {
-        Ok(())
+
+        entry.run_with_context(context).await?;
+        return Ok(());
     }
 }

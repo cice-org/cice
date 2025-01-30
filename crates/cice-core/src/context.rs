@@ -1,12 +1,20 @@
-use crate::controller::{Controller, ControllerId};
+use futures::future::BoxFuture;
+
+use crate::controller::{Controller, ControllerError, ControllerId};
 use crate::pipeline::Pipeline;
-use crate::recognizer::{Recognizer, RecognizerId};
+use crate::recognizer::{Recognizer, RecognizerError, RecognizerId};
 use crate::resource::ResourceData;
 use crate::task::{Task, TaskData, TaskError, TaskId};
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::future::Future;
+use std::sync::Arc;
 
-struct ControllerWrapper {
+#[repr(transparent)]
+#[derive(Clone)]
+pub(crate) struct ControllerWrapper(Arc<ControllerWrapperInner>);
+
+struct ControllerWrapperInner {
     controller: Box<dyn Controller>,
     config: ResourceData,
     initialized: bool,
@@ -14,88 +22,181 @@ struct ControllerWrapper {
 
 impl ControllerWrapper {
     fn new(controller: Box<dyn Controller>, config: ResourceData) -> Self {
-        Self {
+        Self(Arc::new(ControllerWrapperInner {
             controller,
             config,
             initialized: false,
+        }))
+    }
+
+    pub(crate) fn get_or_init(&self) -> Result<&dyn Controller, ControllerError> {
+        if self.0.initialized {
+            return Ok(self.0.controller.borrow());
+        } else {
+            self.0.controller.as_ref().init(&self.0.config)?;
+            return Ok(self.0.controller.borrow());
         }
     }
 
-    fn controller(&self) -> Option<&dyn Controller> {
-        if self.initialized {
-            return Some(self.controller.borrow());
+    pub(crate) fn config(&self) -> &ResourceData {
+        &self.0.config
+    }
+}
+struct RecognizerWrapperInner {
+    recognizer: Box<dyn Recognizer>,
+    config: ResourceData,
+    initialized: bool,
+}
+#[derive(Clone)]
+pub(crate) struct RecognizerWrapper(Arc<RecognizerWrapperInner>);
+
+impl RecognizerWrapper {
+    fn new(recognizer: Box<dyn Recognizer>, config: ResourceData) -> Self {
+        Self(Arc::new(RecognizerWrapperInner {
+            recognizer,
+            config,
+            initialized: false,
+        }))
+    }
+
+    fn recognizer(&self) -> Option<&dyn Recognizer> {
+        if self.0.initialized {
+            return Some(self.0.recognizer.borrow());
         } else {
             return None;
         }
     }
+
+    pub(crate) fn get_or_init(&self) -> Result<&dyn Recognizer, RecognizerError> {
+        if self.0.initialized {
+            return Ok(self.0.recognizer.borrow());
+        } else {
+            self.0.recognizer.as_ref().init(&self.0.config)?;
+            return Ok(self.0.recognizer.borrow());
+        }
+    }
+
+    pub(crate) fn config(&self) -> &ResourceData {
+        &self.0.config
+    }
 }
 
-pub struct Context {
-    pipeline: Pipeline,
+pub struct ContextBuilder {
     tasks: HashMap<TaskId, Task>,
     controllers: HashMap<ControllerId, ControllerWrapper>,
-    reconizers: HashMap<RecognizerId, Box<dyn Recognizer>>,
+    reconizers: HashMap<RecognizerId, RecognizerWrapper>,
+    cancel_handler: Option<Box<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>>,
 }
 
-impl Context {
-    pub fn new() -> Context {
+impl ContextBuilder {
+    pub fn new() -> Self {
         Self {
-            pipeline: Pipeline::new(),
             tasks: HashMap::new(),
             controllers: HashMap::new(),
             reconizers: HashMap::new(),
+            cancel_handler: None,
         }
     }
-    pub async fn run(&self, entry: TaskId) -> Result<(), TaskError> {
-        if let Some(task) = self.tasks.get(&entry) {
-            return self.pipeline.run_pipeline(task.clone(), &self).await;
-        } else {
-            log::error!("Entry Task {entry} not found");
-            return Err(TaskError::UnknownTask(entry));
-        }
-    }
-
-    pub fn insert_task<T: TaskData>(&mut self, task_data: T) {
+    pub fn add_task<T: TaskData>(&mut self, task_data: T) -> &mut Self {
         self.tasks
             .insert(task_data.base_data().task_name, task_data.into());
+        self
     }
 
-    pub fn insert_tasks<T: TaskData>(&mut self, tasks: Vec<T>) {
+    pub fn add_tasks<T: TaskData>(&mut self, tasks: Vec<T>) -> &mut Self {
         for task in tasks {
-            self.insert_task(task);
+            self.add_task(task);
         }
+        self
     }
 
     /// # Params
     /// - controller: (controller: Box<dyn Controller>, controller_config: ResourceData) controller and its config resource data
-    pub fn insert_controller(&mut self, controller: (Box<dyn Controller>, ResourceData)) {
+    pub fn add_controller(&mut self, controller: (Box<dyn Controller>, ResourceData)) -> &mut Self {
         self.controllers.insert(
             controller.0.name(),
             ControllerWrapper::new(controller.0, controller.1),
         );
+        self
     }
 
     /// # Prams
     /// - controllers: Vec<Box<dyn Controller>> controllers and their config resource data
-    pub fn inert_controllers(&mut self, controllers: Vec<(Box<dyn Controller>, ResourceData)>) {
+    pub fn add_controllers(
+        &mut self,
+        controllers: Vec<(Box<dyn Controller>, ResourceData)>,
+    ) -> &mut Self {
         for controller in controllers {
-            self.insert_controller(controller);
+            self.add_controller(controller);
         }
+        self
     }
 
-    pub fn insert_recognizer(&mut self, recognizer: Box<dyn Recognizer>) {
-        self.reconizers.insert(recognizer.name(), recognizer.into());
+    pub fn add_recognizer(&mut self, recognizer: (Box<dyn Recognizer>, ResourceData)) -> &mut Self {
+        self.reconizers.insert(
+            recognizer.0.name(),
+            RecognizerWrapper::new(recognizer.0, recognizer.1),
+        );
+        self
     }
 
-    pub fn insert_recognizers(&mut self, recognizers: Vec<Box<dyn Recognizer>>) {
+    pub fn add_recognizers(
+        &mut self,
+        recognizers: Vec<(Box<dyn Recognizer>, ResourceData)>,
+    ) -> &mut Self {
         for recognizer in recognizers {
-            self.insert_recognizer(recognizer);
+            self.add_recognizer(recognizer);
         }
+        self
+    }
+
+    pub fn set_cancel_handler<F, Fut>(&mut self, handler: F)
+    where
+        F: Fn() -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.cancel_handler = Some(Box::new(move || Box::pin(handler())));
+    }
+    pub fn build(self) -> Context {
+        Context(Arc::new(ContextInner {
+            pipeline: Pipeline::new(),
+            tasks: self.tasks,
+            controllers: self.controllers,
+            reconizers: self.reconizers,
+            cancel_handler: self.cancel_handler,
+        }))
     }
 }
 
-impl Default for Context {
-    fn default() -> Self {
-        Self::new()
+struct ContextInner {
+    pipeline: Pipeline,
+    tasks: HashMap<TaskId, Task>,
+    controllers: HashMap<ControllerId, ControllerWrapper>,
+    reconizers: HashMap<RecognizerId, RecognizerWrapper>,
+    cancel_handler: Option<Box<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>>,
+}
+
+pub struct Context(Arc<ContextInner>);
+
+impl Context {
+    pub async fn run(&self, entry: TaskId) -> Result<(), TaskError> {
+        if let Some(task) = self.0.tasks.get(&entry) {
+            return self.0.pipeline.run_pipeline(task.clone(), &self).await;
+        } else {
+            log::error!("Entry Task {entry} not found");
+            return Err(TaskError::UnknownTask { id: entry });
+        }
+    }
+
+    pub(crate) fn get_controller(&self, id: &ControllerId) -> Option<&ControllerWrapper> {
+        self.0.controllers.get(id)
+    }
+
+    pub(crate) fn get_recognizer(&self, id: &RecognizerId) -> Option<&RecognizerWrapper> {
+        self.0.reconizers.get(id)
+    }
+
+    pub(crate) fn get_task(&self, id: &TaskId) -> Option<&Task> {
+        self.0.tasks.get(id)
     }
 }

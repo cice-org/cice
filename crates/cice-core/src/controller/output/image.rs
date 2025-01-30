@@ -1,13 +1,15 @@
 use core::error::Error;
 
+use async_trait::async_trait;
 use image::DynamicImage;
 
-use crate::resource::ResourceData;
+use crate::{controller::CustomControllerError, resource::ResourceData};
 
 use super::OutputController;
 
 pub type ImageOutput = DynamicImage;
 
+#[async_trait]
 pub trait ImageOutputController: OutputController {
-    fn exec(&self, action: &ResourceData) -> Result<ImageOutput, Box<dyn Error>>;
+    async fn exec(&self, action: &ResourceData) -> Result<ImageOutput, CustomControllerError>;
 }

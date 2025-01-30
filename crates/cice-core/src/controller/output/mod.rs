@@ -1,6 +1,7 @@
 use super::Controller;
 use crate::define_controller;
-use image::ImageOutputController;
+use core::error::Error;
+use image::{ImageOutput, ImageOutputController};
 
 pub mod image;
 
