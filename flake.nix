@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     devenv.url = "github:cachix/devenv";
     fenix.url = "github:nix-community/fenix";
     fenix.inputs = { nixpkgs.follows = "nixpkgs"; };
@@ -25,12 +25,16 @@
             # This is your devenv configuration
             packages = with pkgs;[
               git
+              lldb
               clang
               libclang
               opencv
               cmake
               pkg-config
               protobuf
+              # Used by libvnc START
+              zlib
+              # Used by libvnc END
             ];
 
             env = {
