@@ -1,0 +1,14 @@
+{
+  "test": {
+    "next_task": ["NextTest"],
+    "interrupt_task": [],
+    "controller_id": "test_controller",
+    "recognizer_id": "test_recognizer"
+  },
+  "NextTest": {
+    "next_task": [],
+    "interrupt_task": [],
+    "controller_id": "test_controller",
+    "recognizer_id": "test_recognizer"
+  }
+}

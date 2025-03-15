@@ -1,9 +1,0 @@
-{
-    "base": {
-        "task_name": "test",
-        "next_task": [],
-        "interrupt_task": [],
-        "controller_id": "",
-        "recognizer_id": ""
-    }
-}

@@ -3,11 +3,16 @@ use cice_core::{
     config::BaseControllerConfig,
     controller::{
         input::InputController,
-        output::{image::ImageOutputController, OutputController},
+        output::{
+            image::{ImageOutput, ImageOutputController},
+            OutputController,
+        },
         Controller, ControllerError, CustomControllerError,
     },
     resource::ResourceData,
 };
+
+use crate::{TestImage, TestImageData};
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct TestControllerConfig {
@@ -25,7 +30,7 @@ pub struct TestController {}
 
 impl Controller for TestController {
     fn name(&self) -> cice_core::controller::ControllerId {
-        return "text_controller".into();
+        return "test_controller".into();
     }
 
     fn init(&self, resource: &cice_core::resource::ResourceData) -> Result<(), ControllerError> {
@@ -59,8 +64,13 @@ impl ImageOutputController for TestController {
         &self,
         output_action: &ResourceData,
     ) -> Result<cice_core::controller::output::image::ImageOutput, CustomControllerError> {
-        todo!()
+        let image = image::open(TestImage!("testCase.jpg")).unwrap();
+        return Ok(image);
     }
 }
 
-impl OutputController for TestController {}
+impl OutputController for TestController {
+    fn ext_image(&self) -> Option<cice_core::controller::output::ImageOutputControllerOps> {
+        Some(self)
+    }
+}

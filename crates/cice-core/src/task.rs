@@ -20,8 +20,8 @@ pub struct Task(Arc<TaskInner>); //This is a readonly
 
 pub struct TaskInner {
     base: BaseTaskConfig,
-    controller_config: ResourceData,
-    recognizer_config: Option<ResourceData>,
+    controller_config_ext: Option<ResourceData>,
+    recognizer_config_ext: Option<ResourceData>,
     controller_output_action: Option<ResourceData>,
     recognizer_action: ResourceData,
 }
@@ -36,20 +36,21 @@ impl Task {
     async fn try_run(&self, context: &Context) -> Result<TaskResult, TaskError> {
         let controller = self.get_controller(context)?;
         let recognizer = self.get_recognizer(context)?;
-        let controller_output_action = self
-            .0
-            .as_ref()
-            .controller_output_action
-            .as_ref()
-            .and_then(|value| {
-                recognizer.require_input().map(|mut require_value| {
-                    merge(&mut require_value, value.clone());
-                    require_value
-                })
-            })
-            .ok_or(TaskError::TaskConfigError {
-                reason: "missing controller output action",
-            })?;
+        //Merge Controller output_action
+        let mut ext_controller_output_action = recognizer.require_input();
+        let base_controller_output_action = self.0.as_ref().controller_output_action.as_ref();
+        let controller_output_action = if let Some(base_action) = base_controller_output_action {
+            ext_controller_output_action.as_mut().map(|value| {
+                merge(value, base_action.clone());
+                value
+            });
+            ext_controller_output_action
+        } else {
+            ext_controller_output_action
+        }
+        .ok_or(TaskError::TaskConfigError {
+            reason: "missing controller output action",
+        })?;
         // TODO match arms by macro
         if let Some(recognizer) = recognizer.ext_image() {
             let output = controller
@@ -113,7 +114,6 @@ impl Task {
                 .ok_or(ControllerError::ControllerNotFound {
                     id: controller_id.clone(),
                 })?;
-        debug_assert_eq!(wrapper.config(), &self.0.controller_config);
         return wrapper.get_or_init().map_err(|e| e.into());
     }
     fn get_recognizer<'b, 'a: 'b>(
@@ -127,7 +127,6 @@ impl Task {
                 .ok_or(ControllerError::ControllerNotFound {
                     id: recognizer_id.clone(),
                 })?;
-        debug_assert_eq!(wrapper.config(), &self.0.controller_config);
         return wrapper.get_or_init().map_err(|e| e.into());
     }
 }
@@ -136,9 +135,9 @@ impl<T: TaskData> From<T> for Task {
     fn from(value: T) -> Self {
         Self(Arc::new(TaskInner {
             base: value.base_data(),
-            controller_config: value.controller_config(),
-            recognizer_config: value.recognizer_config(),
-            controller_output_action: value.controller_output_action(),
+            controller_config_ext: value.controller_config_ext(),
+            recognizer_config_ext: value.recognizer_config_ext(),
+            controller_output_action: value.controller_output_action_ext(),
             recognizer_action: value.recognizer_action(),
         }))
     }
@@ -146,18 +145,18 @@ impl<T: TaskData> From<T> for Task {
 
 pub trait TaskData {
     fn base_data(&self) -> BaseTaskConfig;
-    fn controller_config(&self) -> ResourceData;
-    fn recognizer_config(&self) -> Option<ResourceData>;
-    fn controller_output_action(&self) -> Option<ResourceData>;
+    fn controller_config_ext(&self) -> Option<ResourceData>;
+    fn recognizer_config_ext(&self) -> Option<ResourceData>;
+    fn controller_output_action_ext(&self) -> Option<ResourceData>;
     fn recognizer_action(&self) -> ResourceData;
 }
 
 impl TaskData for ResourceData {
-    fn controller_config(&self) -> ResourceData {
+    fn controller_config_ext(&self) -> Option<ResourceData> {
         todo!()
     }
 
-    fn recognizer_config(&self) -> Option<ResourceData> {
+    fn recognizer_config_ext(&self) -> Option<ResourceData> {
         todo!()
     }
 
@@ -165,7 +164,7 @@ impl TaskData for ResourceData {
         todo!()
     }
 
-    fn controller_output_action(&self) -> Option<ResourceData> {
+    fn controller_output_action_ext(&self) -> Option<ResourceData> {
         todo!()
     }
 
@@ -225,33 +224,76 @@ fn merge(a: &mut ResourceData, b: ResourceData) {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use std::sync::Arc;
+#[cfg(test)]
+mod test {
+    use super::*;
+    use serde_json::json;
 
-//     use serde_json::json;
+    #[test]
+    fn test_json_merge() {
+        // Test inserting new keys
+        let mut a = json!({
+            "key1": "value1",
+            "key2": "value2"
+        });
+        let b = json!({
+            "key3": "value3"
+        });
+        merge(&mut a, b);
+        assert_eq!(
+            a,
+            json!({
+                "key1": "value1",
+                "key2": "value2",
+                "key3": "value3"
+            })
+        );
 
-//     use crate::{config::BaseTaskConfig, context::ContextBuilder};
+        // Test overriding existing keys
+        let mut a = json!({
+            "key1": "value1",
+            "key2": "value2"
+        });
+        let b = json!({
+            "key2": "new_value2",
+            "key3": "value3"
+        });
+        merge(&mut a, b);
+        assert_eq!(
+            a,
+            json!({
+                "key1": "value1",
+                "key2": "new_value2",
+                "key3": "value3"
+            })
+        );
 
-//     use super::Task;
-
-//     fn assert_send<T: Send>(_: T) {}
-
-//     #[test]
-//     fn assert_run_with_context_send() {
-//         assert_send(
-//             Task(Arc::new(super::TaskInner {
-//                 base: BaseTaskConfig {
-//                     task_name: "".to_string(),
-//                     next_task: vec![],
-//                     interrupt_task: vec![],
-//                     controller_id: "".to_string(),
-//                     recognizer_id: "".to_string(),
-//                 },
-//                 controller_config: json!({}),
-//                 recognizer_config: Some(json!({})),
-//             }))
-//             .run_with_context(&ContextBuilder::new().build()),
-//         );
-//     }
-// }
+        // Test overriding existing keys in nested json
+        let mut a = json!({
+            "key1": "value1",
+            "key2": "value2",
+            "key3":json!({
+                "key3-1":"value3-1",
+                "key3-2":"value3-2",
+            })
+        });
+        let b = json!({
+            "key2": "new_value2",
+            "key3":json!({
+                "key3-1":"newvalue3-1",
+            })
+        });
+        merge(&mut a, b);
+        assert_eq!(
+            a,
+            json!({
+                "key1": "value1",
+                "key2": "new_value2",
+                "key3":json!({
+                    "key3-1":"newvalue3-1",
+                    "key3-2":"value3-2",
+                })
+            })
+        );
+    }
+}

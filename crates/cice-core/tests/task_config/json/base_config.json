@@ -2,5 +2,9 @@
     "controller":{
         "id":"test_controller",
         "port": "5690"
+    },
+    "recognizer":{
+        "id":"test_recognizer",
+        "path":"./"
     }
 }

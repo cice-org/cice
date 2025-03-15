@@ -2,6 +2,7 @@ pub mod action;
 pub mod controller;
 pub mod recognizer;
 pub mod task;
+pub mod resourece;
 
 use controller::TestControllerConfig;
 use recognizer::TestImageRecognizerConfig;

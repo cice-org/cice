@@ -48,6 +48,6 @@ impl ImageRecognizer for TestImageRecognizer {
         action: &ResourceData,
         data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
-        todo!()
+        return Ok(json!({}));
     }
 }
