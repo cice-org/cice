@@ -1,5 +1,4 @@
 extern crate alloc;
-pub mod config;
 pub mod context;
 pub mod controller;
 pub mod recognizer;

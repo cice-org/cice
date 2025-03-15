@@ -2,12 +2,17 @@ use async_trait::async_trait;
 use cice_core::controller::output::image::ImageOutput;
 use cice_core::recognizer::CustomRecognizerError;
 use cice_core::{
-    config::BaseControllerConfig,
     recognizer::{image::ImageRecognizer, Recognizer, RecognizerError},
     resource::ResourceData,
 };
 use serde_json::json;
 
+use super::controller::BaseControllerConfig;
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
+pub struct BaseRecognizerConfig {
+    pub id: String,
+}
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct TestImageRecognizerConfig {
     pub base: ::core::option::Option<BaseControllerConfig>,

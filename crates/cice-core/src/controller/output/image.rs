@@ -1,5 +1,3 @@
-use core::error::Error;
-
 use async_trait::async_trait;
 use image::DynamicImage;
 

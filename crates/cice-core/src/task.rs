@@ -5,7 +5,6 @@ use futures::{future::select_ok, FutureExt};
 use snafu::Snafu;
 
 use crate::{
-    config::BaseTaskConfig,
     context::Context,
     controller::{Controller, ControllerError},
     recognizer::{CustomRecognizerError, Recognizer, RecognizerError},
@@ -24,6 +23,15 @@ pub struct TaskInner {
     recognizer_config_ext: Option<ResourceData>,
     controller_output_action: Option<ResourceData>,
     recognizer_action: ResourceData,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
+pub struct BaseTaskConfig {
+    pub task_name: String,
+    pub next_task: Vec<String>,
+    pub interrupt_task: Vec<String>,
+    pub controller_id: String,
+    pub recognizer_id: String,
 }
 
 impl TaskInner {
@@ -149,28 +157,6 @@ pub trait TaskData {
     fn recognizer_config_ext(&self) -> Option<ResourceData>;
     fn controller_output_action_ext(&self) -> Option<ResourceData>;
     fn recognizer_action(&self) -> ResourceData;
-}
-
-impl TaskData for ResourceData {
-    fn controller_config_ext(&self) -> Option<ResourceData> {
-        todo!()
-    }
-
-    fn recognizer_config_ext(&self) -> Option<ResourceData> {
-        todo!()
-    }
-
-    fn base_data(&self) -> BaseTaskConfig {
-        todo!()
-    }
-
-    fn controller_output_action_ext(&self) -> Option<ResourceData> {
-        todo!()
-    }
-
-    fn recognizer_action(&self) -> ResourceData {
-        todo!()
-    }
 }
 
 #[derive(Debug)]

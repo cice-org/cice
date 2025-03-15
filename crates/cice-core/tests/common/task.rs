@@ -1,11 +1,16 @@
 use std::collections::HashMap;
 
-use cice_core::{
-    config::{BaseTaskConfig, BaseTaskConfigContent},
-    task::TaskData,
-};
+use cice_core::task::{BaseTaskConfig, TaskData};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
+pub struct BaseTaskConfigContent {
+    pub next_task: Vec<String>,
+    pub interrupt_task: Vec<String>,
+    pub controller_id: String,
+    pub recognizer_id: String,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct TestTasks(HashMap<String, BaseTaskConfigContent>);

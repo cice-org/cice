@@ -1,4 +1,4 @@
-use cice_core::{config::BaseTaskConfig, context::ContextBuilder};
+use cice_core::context::ContextBuilder;
 use common::{
     controller::TestController,
     recognizer::TestImageRecognizer,

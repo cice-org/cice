@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use cice_core::{
-    config::BaseControllerConfig,
     controller::{
         input::InputController,
         output::{
@@ -13,6 +12,11 @@ use cice_core::{
 };
 
 use crate::{TestImage, TestImageData};
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
+pub struct BaseControllerConfig {
+    pub id: String,
+}
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct TestControllerConfig {
