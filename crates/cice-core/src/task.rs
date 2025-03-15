@@ -173,7 +173,8 @@ impl TaskData for ResourceData {
     }
 }
 
-pub(crate) enum TaskResult {
+#[derive(Debug)]
+pub enum TaskResult {
     Success,
     NoPendingTask,
 }

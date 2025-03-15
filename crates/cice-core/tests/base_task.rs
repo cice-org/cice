@@ -27,7 +27,7 @@ async fn config() {
     for task in task_datas {
         builder.add_task(task);
     }
-    let ret: Result<(), cice_core::task::TaskError> = builder.build().run("test".to_string()).await;
+    let ret = builder.build().run("test".to_string()).await;
     println!("{ret:?}");
     assert!(ret.is_ok())
 }

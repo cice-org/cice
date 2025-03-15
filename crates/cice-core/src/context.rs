@@ -1,10 +1,9 @@
 use futures::future::BoxFuture;
 
 use crate::controller::{Controller, ControllerError, ControllerId};
-use crate::pipeline::Pipeline;
 use crate::recognizer::{Recognizer, RecognizerError, RecognizerId};
 use crate::resource::ResourceData;
-use crate::task::{Task, TaskData, TaskError, TaskId};
+use crate::task::{Task, TaskData, TaskError, TaskId, TaskResult};
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::future::Future;
@@ -159,7 +158,6 @@ impl ContextBuilder {
     }
     pub fn build(self) -> Context {
         Context(Arc::new(ContextInner {
-            pipeline: Pipeline::new(),
             tasks: self.tasks,
             controllers: self.controllers,
             reconizers: self.reconizers,
@@ -169,7 +167,6 @@ impl ContextBuilder {
 }
 
 struct ContextInner {
-    pipeline: Pipeline,
     tasks: HashMap<TaskId, Task>,
     controllers: HashMap<ControllerId, ControllerWrapper>,
     reconizers: HashMap<RecognizerId, RecognizerWrapper>,
@@ -179,9 +176,9 @@ struct ContextInner {
 pub struct Context(Arc<ContextInner>);
 
 impl Context {
-    pub async fn run(&self, entry: TaskId) -> Result<(), TaskError> {
+    pub async fn run(&self, entry: TaskId) -> Result<TaskResult, TaskError> {
         if let Some(task) = self.0.tasks.get(&entry) {
-            return self.0.pipeline.run_pipeline(task.clone(), &self).await;
+            return task.run_with_context(self).await;
         } else {
             log::error!("Entry Task {entry} not found");
             return Err(TaskError::UnknownTask { id: entry });
