@@ -177,7 +177,7 @@ impl Task {
         let wrapper =
             context
                 .get_recognizer(recognizer_id)
-                .ok_or(ControllerError::ControllerNotFound {
+                .ok_or(RecognizerError::RecognizerNotFound {
                     id: recognizer_id.clone(),
                 })?;
         return wrapper.get_or_init().map_err(|e| e.into());
