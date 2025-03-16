@@ -80,20 +80,41 @@ impl RecognizerWrapper {
     }
 }
 
+pub struct ContextHandler(Arc<ContextHandlerInner>);
+
+pub struct ContextHandlerInner {
+    cancel_sender: async_channel::Sender<()>,
+}
+
+impl ContextHandler {
+    pub async fn cancel(&self) -> Result<(), async_channel::SendError<()>> {
+        self.0.cancel_sender.send(()).await
+    }
+
+    pub fn try_cancel(&self) -> Result<(), async_channel::TrySendError<()>> {
+        self.0.cancel_sender.try_send(())
+    }
+}
+
 pub struct ContextBuilder {
     tasks: HashMap<TaskId, Task>,
     controllers: HashMap<ControllerId, ControllerWrapper>,
     reconizers: HashMap<RecognizerId, RecognizerWrapper>,
-    cancel_handler: Option<Box<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>>,
+    context_handler: ContextHandler,
+    cancel_recv: async_channel::Receiver<()>,
 }
 
 impl ContextBuilder {
     pub fn new() -> Self {
+        let (send, recv) = async_channel::bounded(1); //Cancel signal should be sent only once
         Self {
             tasks: HashMap::new(),
             controllers: HashMap::new(),
             reconizers: HashMap::new(),
-            cancel_handler: None,
+            context_handler: ContextHandler(Arc::new(ContextHandlerInner {
+                cancel_sender: send,
+            })),
+            cancel_recv: recv,
         }
     }
     pub fn add_task<T: TaskData>(&mut self, task_data: T) -> &mut Self {
@@ -149,19 +170,12 @@ impl ContextBuilder {
         self
     }
 
-    pub fn set_cancel_handler<F, Fut>(&mut self, handler: F)
-    where
-        F: Fn() -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = ()> + Send + 'static,
-    {
-        self.cancel_handler = Some(Box::new(move || Box::pin(handler())));
-    }
     pub fn build(self) -> Context {
         Context(Arc::new(ContextInner {
             tasks: self.tasks,
             controllers: self.controllers,
             reconizers: self.reconizers,
-            cancel_handler: self.cancel_handler,
+            cancel_recv: self.cancel_recv,
         }))
     }
 }
@@ -170,7 +184,7 @@ struct ContextInner {
     tasks: HashMap<TaskId, Task>,
     controllers: HashMap<ControllerId, ControllerWrapper>,
     reconizers: HashMap<RecognizerId, RecognizerWrapper>,
-    cancel_handler: Option<Box<dyn Fn() -> BoxFuture<'static, ()> + Send + Sync>>,
+    cancel_recv: async_channel::Receiver<()>,
 }
 
 pub struct Context(Arc<ContextInner>);
@@ -195,5 +209,9 @@ impl Context {
 
     pub(crate) fn get_task(&self, id: &TaskId) -> Option<&Task> {
         self.0.tasks.get(id)
+    }
+
+    pub(crate) async fn get_cancel_signal(&self) -> Result<(), async_channel::RecvError> {
+        self.0.cancel_recv.recv().await
     }
 }

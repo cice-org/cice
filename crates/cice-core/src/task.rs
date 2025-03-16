@@ -1,7 +1,10 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use alloc::{string::String, vec::Vec};
-use futures::{future::select_ok, FutureExt};
+use futures::{
+    future::{select, select_ok, Either, Fuse, FusedFuture},
+    select, FutureExt, StreamExt,
+};
 use snafu::Snafu;
 
 use crate::{
@@ -106,8 +109,22 @@ impl Task {
         if tasks.is_empty() {
             return Ok(TaskResult::NoPendingTask);
         }
-        select_ok(tasks.iter().map(|task| task.try_run(context).boxed())).await?;
-        Ok(TaskResult::Success)
+        let mut cancel_signal = context.get_cancel_signal().boxed().fuse();
+        let mut task_futures = futures::stream::FuturesOrdered::new();
+        tasks.iter().for_each(|task| {
+            task_futures.push_back(task.try_run(context).boxed());
+        });
+        select! {
+            res = task_futures.next() => match res {
+                Some(Ok(res)) => Ok(res),
+                Some(Err(e)) => Err(e),
+                None => Ok(TaskResult::NoPendingTask),
+            },
+            _ = cancel_signal => {
+                // Cancel signal received
+                Ok(TaskResult::TaskCancelled)
+            }
+        }
     }
 
     //FIXME remove this lifetime parameter once rust compiler fix it
@@ -159,10 +176,11 @@ pub trait TaskData {
     fn recognizer_action(&self) -> ResourceData;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TaskResult {
     Success,
     NoPendingTask,
+    TaskCancelled,
 }
 
 // struct TaskErrorWrapper(Arc<TaskError>);
