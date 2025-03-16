@@ -142,15 +142,23 @@ impl Task {
         tasks.iter().for_each(|task| {
             task_futures.push_back(task.try_run(context).boxed());
         });
-        select! {
-            res = task_futures.next() => match res {
-                Some(Ok(res)) => Ok(res),
-                Some(Err(e)) => Err(e),
-                None => Ok(TaskResult::NoPendingTask),
-            },
-            _ = cancel_signal => {
-                // Cancel signal received
-                Ok(TaskResult::TaskCancelled)
+        loop {
+            select! {
+                   res = task_futures.next() => match res {
+                       Some(Ok(res)) => return Ok(res),
+                       Some(Err(e)) => {
+                           if e.is_fatal(){
+                               return Err(e)
+                           }else{
+                               continue;
+                           }
+                       },
+                       None => return Ok(TaskResult::NoPendingTask),
+                   },
+                   _ = cancel_signal => {
+                       // Cancel signal received
+                       return Ok(TaskResult::TaskCancelled)
+                }
             }
         }
     }
@@ -252,6 +260,30 @@ impl From<ControllerError> for TaskError {
 impl From<RecognizerError> for TaskError {
     fn from(value: RecognizerError) -> Self {
         Self::RecognizerError { source: value }
+    }
+}
+
+impl TaskError {
+    //return whether this erro Should break running
+    //TODO should extract a trait for CustomError to implement is_fatal()?
+    fn is_fatal(&self) -> bool {
+        match self {
+            TaskError::ControllerError { source } => match source {
+                ControllerError::Err { source } => match source {
+                    crate::controller::CustomControllerError::Fatal { source: _ } => true,
+                    crate::controller::CustomControllerError::Common { source: _ } => false,
+                },
+                _ => true,
+            },
+            TaskError::RecognizerError { source } => match source {
+                RecognizerError::Err { source } => match source {
+                    crate::recognizer::CustomRecognizerError::Fatal { source: _ } => true,
+                    crate::recognizer::CustomRecognizerError::Common { source: _ } => false,
+                },
+                _ => true,
+            },
+            _ => true,
+        }
     }
 }
 

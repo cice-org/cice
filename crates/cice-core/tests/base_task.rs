@@ -1,7 +1,6 @@
 use cice_core::context::ContextBuilder;
 use cice_core::message::{task::TaskMessage, Message};
-use cice_core::resource::ResourceData;
-use cice_core::task::config::BaseTaskConfig;
+use common::recognizer::DenyAllRecognizer;
 use common::{
     controller::TestController,
     recognizer::TestImageRecognizer,
@@ -24,7 +23,7 @@ async fn config() {
         Box::new(TestImageRecognizer {}),
         serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
     ));
-    let task_config = include_str!("task_config/json/tasks.json");
+    let task_config = include_str!("task_config/json/base_task.json");
     let task_datas: TestTasks = serde_json::from_str(task_config).unwrap();
     let task_datas: Vec<TestTaskData> = task_datas.into();
     for task in task_datas {
@@ -48,7 +47,7 @@ async fn task_sequence() {
         Box::new(TestImageRecognizer {}),
         serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
     ));
-
+    builder.add_recognizer((Box::new(DenyAllRecognizer {}), serde_json::json!({})));
     // Load task sequence config
     let task_config = include_str!("task_config/json/task_sequence.json");
     let task_datas: TestTasks = serde_json::from_str(task_config).unwrap();

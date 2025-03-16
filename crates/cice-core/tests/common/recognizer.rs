@@ -75,7 +75,7 @@ impl Recognizer for DenyAllRecognizer {
     }
 
     fn require_input(&self) -> Option<ResourceData> {
-        return None;
+        return Some(json!({}));
     }
 }
 
