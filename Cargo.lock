@@ -40,9 +40,9 @@ dependencies = [
 
 [[package]]
 name = "async-trait"
-version = "0.1.86"
+version = "0.1.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644dd749086bf3771a2fbc5f256fdb982d53f011c7d5d560304eafeecebce79d"
+checksum = "e539d3fca749fcee5236ab05e93a52867dd549cc157c8cb7f99595f3cedffdb5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -182,6 +182,9 @@ version = "0.1.0"
 name = "cice-recognizer-opencv"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "cice-action",
+ "cice-core",
  "opencv",
 ]
 
