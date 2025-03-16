@@ -57,7 +57,7 @@ impl Controller for TestController {
 
 #[async_trait]
 impl InputController for TestController {
-    async fn exec(&self, input_action: &ResourceData) -> Result<(), CustomControllerError> {
+    async fn exec(&self, _input_action: &ResourceData) -> Result<(), CustomControllerError> {
         todo!()
     }
 }
@@ -66,7 +66,7 @@ impl InputController for TestController {
 impl ImageOutputController for TestController {
     async fn exec(
         &self,
-        output_action: &ResourceData,
+        _output_action: &ResourceData,
     ) -> Result<cice_core::controller::output::image::ImageOutput, CustomControllerError> {
         let image = image::open(TestImage!("testCase.jpg")).unwrap();
         return Ok(image);

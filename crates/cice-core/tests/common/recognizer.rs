@@ -1,4 +1,3 @@
-
 use async_trait::async_trait;
 use cice_core::controller::output::image::ImageOutput;
 use cice_core::recognizer::CustomRecognizerError;
@@ -52,8 +51,8 @@ impl Recognizer for TestImageRecognizer {
 impl ImageRecognizer for TestImageRecognizer {
     async fn exec(
         &self,
-        action: &ResourceData,
-        data: ImageOutput,
+        _action: &ResourceData,
+        _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Ok(json!({}));
     }
@@ -66,7 +65,7 @@ impl Recognizer for AcceptAllRecognizer {
         "recognizer_AcceptAll".into()
     }
 
-    fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
+    fn init(&self, _resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
         Ok(())
     }
     fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
@@ -82,8 +81,8 @@ impl Recognizer for AcceptAllRecognizer {
 impl ImageRecognizer for AcceptAllRecognizer {
     async fn exec(
         &self,
-        action: &ResourceData,
-        data: ImageOutput,
+        _action: &ResourceData,
+        _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Ok(json!({}));
     }
@@ -96,7 +95,7 @@ impl Recognizer for DenyAllRecognizer {
         "recognizer_DenyAll".into()
     }
 
-    fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
+    fn init(&self, _resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
         Ok(())
     }
     fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
@@ -112,8 +111,8 @@ impl Recognizer for DenyAllRecognizer {
 impl ImageRecognizer for DenyAllRecognizer {
     async fn exec(
         &self,
-        action: &ResourceData,
-        data: ImageOutput,
+        _action: &ResourceData,
+        _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Err(CustomRecognizerError::Common {
             source: Box::new(TestDenyAllError::DenyAll),
