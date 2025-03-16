@@ -4,7 +4,7 @@
         "port": "5690"
     },
     "recognizer":{
-        "id":"test_recognizer",
+        "id":"recognizer_Image",
         "path":"./"
     }
 }

@@ -27,7 +27,7 @@ pub struct TestImageRecognizer {}
 
 impl Recognizer for TestImageRecognizer {
     fn name(&self) -> String {
-        return "test_recognizer".into();
+        return "recognizer_Image".into();
     }
 
     fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
@@ -51,6 +51,36 @@ impl Recognizer for TestImageRecognizer {
 
 #[async_trait]
 impl ImageRecognizer for TestImageRecognizer {
+    async fn exec(
+        &self,
+        action: &ResourceData,
+        data: ImageOutput,
+    ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
+        return Ok(json!({}));
+    }
+}
+
+pub struct AcceptAllRecognizer {}
+
+impl Recognizer for AcceptAllRecognizer {
+    fn name(&self) -> String {
+        return "recognizer_AcceptAll".into();
+    }
+
+    fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
+        Ok(())
+    }
+    fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
+        return Some(self);
+    }
+
+    fn require_input(&self) -> Option<ResourceData> {
+        return Some(json!({}));
+    }
+}
+
+#[async_trait]
+impl ImageRecognizer for AcceptAllRecognizer {
     async fn exec(
         &self,
         action: &ResourceData,
