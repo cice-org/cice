@@ -2,10 +2,7 @@ use async_trait::async_trait;
 use cice_core::{
     controller::{
         input::InputController,
-        output::{
-            image::ImageOutputController,
-            OutputController,
-        },
+        output::{image::ImageOutputController, OutputController},
         Controller, ControllerError, CustomControllerError,
     },
     resource::ResourceData,
