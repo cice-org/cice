@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+cice-core = { version = "0.1.0", path = "../../cice-core" }
+cice-action = { version = "0.1.0", path = "../../cice-action" }
 opencv = { version = "0.94.2", features = ["clang-runtime"] }
+async-trait = { workspace = true }
 
 [features]
