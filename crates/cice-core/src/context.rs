@@ -1,5 +1,3 @@
-use futures::future::BoxFuture;
-
 use crate::controller::{Controller, ControllerError, ControllerId};
 use crate::message::Message;
 use crate::recognizer::{Recognizer, RecognizerError, RecognizerId};
@@ -7,7 +5,6 @@ use crate::resource::ResourceData;
 use crate::task::{Task, TaskData, TaskError, TaskId, TaskResult};
 use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::future::Future;
 use std::sync::Arc;
 
 #[repr(transparent)]
@@ -31,10 +28,10 @@ impl ControllerWrapper {
 
     pub(crate) fn get_or_init(&self) -> Result<&dyn Controller, ControllerError> {
         if self.0.initialized {
-            return Ok(self.0.controller.borrow());
+            Ok(self.0.controller.borrow())
         } else {
             self.0.controller.as_ref().init(&self.0.config)?;
-            return Ok(self.0.controller.borrow());
+            Ok(self.0.controller.borrow())
         }
     }
 
@@ -59,20 +56,12 @@ impl RecognizerWrapper {
         }))
     }
 
-    fn recognizer(&self) -> Option<&dyn Recognizer> {
-        if self.0.initialized {
-            return Some(self.0.recognizer.borrow());
-        } else {
-            return None;
-        }
-    }
-
     pub(crate) fn get_or_init(&self) -> Result<&dyn Recognizer, RecognizerError> {
         if self.0.initialized {
-            return Ok(self.0.recognizer.borrow());
+            Ok(self.0.recognizer.borrow())
         } else {
             self.0.recognizer.as_ref().init(&self.0.config)?;
-            return Ok(self.0.recognizer.borrow());
+            Ok(self.0.recognizer.borrow())
         }
     }
 
@@ -118,18 +107,18 @@ pub struct ContextBuilder {
 
 impl ContextBuilder {
     pub fn new() -> Self {
-        let (cancel_send, cancel_recv) = async_channel::bounded(1); //Cancel signal should be sent only once
-        let (message_send, message_recv) = async_channel::bounded(20);
+        let (cancel_sender, cancel_recv) = async_channel::bounded(1); //Cancel signal should be sent only once
+        let (message_sender, message_recv) = async_channel::bounded(20);
         Self {
             tasks: HashMap::new(),
             controllers: HashMap::new(),
             reconizers: HashMap::new(),
             context_handler: ContextHandler(Arc::new(ContextHandlerInner {
-                cancel_sender: cancel_send,
-                message_recv: message_recv,
+                cancel_sender,
+                message_recv,
             })),
             cancel_recv,
-            message_sender: message_send,
+            message_sender,
         }
     }
     pub fn add_task<T: TaskData>(&mut self, task_data: T) -> &mut Self {
@@ -197,6 +186,12 @@ impl ContextBuilder {
     }
 }
 
+impl Default for ContextBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 struct ContextInner {
     tasks: HashMap<TaskId, Task>,
     controllers: HashMap<ControllerId, ControllerWrapper>,
@@ -215,7 +210,7 @@ impl Context {
             while let Ok(ref res) = task_res {
                 match res {
                     TaskResult::Success { id } => {
-                        task_res = self.get_task(&id).unwrap().run_with_context(self).await;
+                        task_res = self.get_task(id).unwrap().run_with_context(self).await;
                         continue;
                     }
                     TaskResult::NoPendingTask => return Ok(TaskResult::NoPendingTask),
@@ -225,7 +220,7 @@ impl Context {
             task_res
         } else {
             log::error!("Entry Task {entry} not found");
-            return Err(TaskError::UnknownTask { id: entry });
+            Err(TaskError::UnknownTask { id: entry })
         }
     }
 

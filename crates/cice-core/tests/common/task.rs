@@ -30,7 +30,7 @@ impl From<TestTasks> for Vec<TestTaskData> {
                 },
             });
         }
-        return vec;
+        vec
     }
 }
 
@@ -41,15 +41,15 @@ pub struct TestTaskData {
 
 impl TaskData for TestTaskData {
     fn base_data(&self) -> BaseTaskConfig {
-        return self.base.clone();
+        self.base.clone()
     }
 
     fn controller_config_ext(&self) -> Option<cice_core::resource::ResourceData> {
-        return None;
+        None
     }
 
     fn recognizer_config_ext(&self) -> Option<cice_core::resource::ResourceData> {
-        return None;
+        None
     }
 
     fn controller_output_action_ext(&self) -> Option<cice_core::resource::ResourceData> {
@@ -57,6 +57,6 @@ impl TaskData for TestTaskData {
     }
 
     fn recognizer_action(&self) -> cice_core::resource::ResourceData {
-        return json!({});
+        json!({})
     }
 }

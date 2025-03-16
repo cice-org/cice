@@ -9,6 +9,7 @@ use snafu::Snafu;
 
 use crate::message::task::TaskMessage;
 use crate::message::Message;
+use crate::utils::merge;
 use crate::{
     context::Context,
     controller::{Controller, ControllerError},
@@ -46,9 +47,18 @@ impl Task {
         );
         let controller = self.get_controller(context)?;
         let recognizer = self.get_recognizer(context)?;
+        // Reinit controller or recognizer if there is extended config in task
+        if let Some(ref config) = self.0.controller_config_ext {
+            self.reinit_controller(context, config, controller)?;
+        }
+        if let Some(ref config) = self.0.recognizer_config_ext {
+            self.reinit_recognizer(context, config, recognizer)?;
+        }
         //Merge Controller output_action
         let mut ext_controller_output_action = recognizer.require_input();
         let base_controller_output_action = self.0.as_ref().controller_output_action.as_ref();
+        //FIXME it's an opening issue https://github.com/rust-lang/rust-clippy/issues/13185
+        #[allow(clippy::manual_inspect)]
         let controller_output_action = if let Some(base_action) = base_controller_output_action {
             ext_controller_output_action.as_mut().map(|value| {
                 merge(value, base_action.clone());
@@ -131,7 +141,7 @@ impl Task {
                         log::error!("no task found for id {id}");
                         None
                     })
-                    .map(Clone::clone)
+                    .cloned()
             })
             .collect();
         if tasks.is_empty() {
@@ -171,11 +181,11 @@ impl Task {
         let controller_id = &self.0.base.controller_id;
         let wrapper =
             context
-                .get_controller(&controller_id)
+                .get_controller(controller_id)
                 .ok_or(ControllerError::ControllerNotFound {
                     id: controller_id.clone(),
                 })?;
-        return wrapper.get_or_init().map_err(|e| e.into());
+        wrapper.get_or_init().map_err(|e| e.into())
     }
     fn get_recognizer<'b, 'a: 'b>(
         &'a self,
@@ -188,7 +198,39 @@ impl Task {
                 .ok_or(RecognizerError::RecognizerNotFound {
                     id: recognizer_id.clone(),
                 })?;
-        return wrapper.get_or_init().map_err(|e| e.into());
+        wrapper.get_or_init().map_err(|e| e.into())
+    }
+
+    fn reinit_controller(
+        &self,
+        context: &Context,
+        ext_config: &ResourceData,
+        controller: &dyn Controller,
+    ) -> Result<(), ControllerError> {
+        let mut base_config = context
+            .get_controller(&self.base().controller_id)
+            .unwrap()
+            .config()
+            .clone();
+        merge(&mut base_config, ext_config.clone());
+        controller.init(&base_config)?;
+        Ok(())
+    }
+
+    fn reinit_recognizer(
+        &self,
+        context: &Context,
+        ext_config: &ResourceData,
+        recognizer: &dyn Recognizer,
+    ) -> Result<(), RecognizerError> {
+        let mut base_config = context
+            .get_recognizer(&self.base().controller_id)
+            .unwrap()
+            .config()
+            .clone();
+        merge(&mut base_config, ext_config.clone());
+        recognizer.init(&base_config)?;
+        Ok(())
     }
 
     fn base(&self) -> &BaseTaskConfig {
@@ -268,107 +310,19 @@ impl TaskError {
     //TODO should extract a trait for CustomError to implement is_fatal()?
     fn is_fatal(&self) -> bool {
         match self {
-            TaskError::ControllerError { source } => match source {
-                ControllerError::Err { source } => match source {
-                    crate::controller::CustomControllerError::Fatal { source: _ } => true,
-                    crate::controller::CustomControllerError::Common { source: _ } => false,
-                },
-                _ => true,
+            TaskError::ControllerError {
+                source: ControllerError::Err { source },
+            } => match source {
+                crate::controller::CustomControllerError::Fatal { source: _ } => true,
+                crate::controller::CustomControllerError::Common { source: _ } => false,
             },
-            TaskError::RecognizerError { source } => match source {
-                RecognizerError::Err { source } => match source {
-                    crate::recognizer::CustomRecognizerError::Fatal { source: _ } => true,
-                    crate::recognizer::CustomRecognizerError::Common { source: _ } => false,
-                },
-                _ => true,
+            TaskError::RecognizerError {
+                source: RecognizerError::Err { source },
+            } => match source {
+                crate::recognizer::CustomRecognizerError::Fatal { source: _ } => true,
+                crate::recognizer::CustomRecognizerError::Common { source: _ } => false,
             },
             _ => true,
         }
-    }
-}
-
-//TODO remove it once it's added to serde_json
-fn merge(a: &mut ResourceData, b: ResourceData) {
-    match (a, b) {
-        (ResourceData::Object(a), ResourceData::Object(b)) => {
-            for (k, v) in b {
-                merge(a.entry(k.clone()).or_insert(ResourceData::Null), v);
-            }
-        }
-        (a, b) => *a = b,
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn test_json_merge() {
-        // Test inserting new keys
-        let mut a = json!({
-            "key1": "value1",
-            "key2": "value2"
-        });
-        let b = json!({
-            "key3": "value3"
-        });
-        merge(&mut a, b);
-        assert_eq!(
-            a,
-            json!({
-                "key1": "value1",
-                "key2": "value2",
-                "key3": "value3"
-            })
-        );
-
-        // Test overriding existing keys
-        let mut a = json!({
-            "key1": "value1",
-            "key2": "value2"
-        });
-        let b = json!({
-            "key2": "new_value2",
-            "key3": "value3"
-        });
-        merge(&mut a, b);
-        assert_eq!(
-            a,
-            json!({
-                "key1": "value1",
-                "key2": "new_value2",
-                "key3": "value3"
-            })
-        );
-
-        // Test overriding existing keys in nested json
-        let mut a = json!({
-            "key1": "value1",
-            "key2": "value2",
-            "key3":json!({
-                "key3-1":"value3-1",
-                "key3-2":"value3-2",
-            })
-        });
-        let b = json!({
-            "key2": "new_value2",
-            "key3":json!({
-                "key3-1":"newvalue3-1",
-            })
-        });
-        merge(&mut a, b);
-        assert_eq!(
-            a,
-            json!({
-                "key1": "value1",
-                "key2": "new_value2",
-                "key3":json!({
-                    "key3-1":"newvalue3-1",
-                    "key3-2":"value3-2",
-                })
-            })
-        );
     }
 }

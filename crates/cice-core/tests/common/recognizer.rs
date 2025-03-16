@@ -1,4 +1,3 @@
-use std::error::Error;
 
 use async_trait::async_trait;
 use cice_core::controller::output::image::ImageOutput;
@@ -27,7 +26,7 @@ pub struct TestImageRecognizer {}
 
 impl Recognizer for TestImageRecognizer {
     fn name(&self) -> String {
-        return "recognizer_Image".into();
+        "recognizer_Image".into()
     }
 
     fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
@@ -41,11 +40,11 @@ impl Recognizer for TestImageRecognizer {
         Ok(())
     }
     fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
-        return Some(self);
+        Some(self)
     }
 
     fn require_input(&self) -> Option<ResourceData> {
-        return Some(json!({"name":"screen_capture"}));
+        Some(json!({"name":"screen_capture"}))
     }
 }
 
@@ -64,18 +63,18 @@ pub struct AcceptAllRecognizer {}
 
 impl Recognizer for AcceptAllRecognizer {
     fn name(&self) -> String {
-        return "recognizer_AcceptAll".into();
+        "recognizer_AcceptAll".into()
     }
 
     fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
         Ok(())
     }
     fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
-        return Some(self);
+        Some(self)
     }
 
     fn require_input(&self) -> Option<ResourceData> {
-        return Some(json!({}));
+        Some(json!({}))
     }
 }
 
@@ -94,18 +93,18 @@ pub struct DenyAllRecognizer {}
 
 impl Recognizer for DenyAllRecognizer {
     fn name(&self) -> String {
-        return "recognizer_DenyAll".into();
+        "recognizer_DenyAll".into()
     }
 
     fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
         Ok(())
     }
     fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
-        return Some(self);
+        Some(self)
     }
 
     fn require_input(&self) -> Option<ResourceData> {
-        return Some(json!({}));
+        Some(json!({}))
     }
 }
 

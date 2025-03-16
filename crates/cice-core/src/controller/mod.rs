@@ -3,7 +3,6 @@ pub mod input;
 /// Fetch data from target device. Such as screen capture
 pub mod output;
 use core::error::Error;
-use std::sync::Arc;
 
 use alloc::string::String;
 use input::InputController;
