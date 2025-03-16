@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use cice_core::task::{BaseTaskConfig, TaskData};
+use cice_core::task::config::BaseTaskConfig;
+use cice_core::task::TaskData;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
