@@ -1,0 +1,9 @@
+[package]
+name = "cice-recognizer-opencv"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+opencv = { version = "0.94.2", features = ["clang-runtime"] }
+
+[features]

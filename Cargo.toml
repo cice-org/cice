@@ -1,3 +1,11 @@
 [workspace]
-members = ["crates/*"]
+members = [
+    "crates/cice",
+    "crates/cice-core",
+    "crates/cice-action",
+    "crates/cice-debug",
+    "crates/cice-lang",
+    "crates/cice-controllers/*",
+    "crates/cice-recognizers/*",
+]
 resolver = "2"

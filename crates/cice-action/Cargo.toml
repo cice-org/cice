@@ -1,0 +1,10 @@
+[package]
+name = "cice-action"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cice-core = { path = "../cice-core" }
+euclid = { version = "0.22.11", features = ["serde"] }
+serde = { version = "1.0.214", features = ["derive"] }
+serde_json = "1.0.132"
