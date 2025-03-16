@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use async_trait::async_trait;
 use cice_core::controller::output::image::ImageOutput;
 use cice_core::recognizer::CustomRecognizerError;
@@ -6,6 +8,7 @@ use cice_core::{
     resource::ResourceData,
 };
 use serde_json::json;
+use snafu::Snafu;
 
 use super::controller::BaseControllerConfig;
 
@@ -55,4 +58,42 @@ impl ImageRecognizer for TestImageRecognizer {
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Ok(json!({}));
     }
+}
+
+pub struct DenyAllRecognizer {}
+
+impl Recognizer for DenyAllRecognizer {
+    fn name(&self) -> String {
+        return "recognizer_DenyAll".into();
+    }
+
+    fn init(&self, resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
+        Ok(())
+    }
+    fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
+        return Some(self);
+    }
+
+    fn require_input(&self) -> Option<ResourceData> {
+        return None;
+    }
+}
+
+#[async_trait]
+impl ImageRecognizer for DenyAllRecognizer {
+    async fn exec(
+        &self,
+        action: &ResourceData,
+        data: ImageOutput,
+    ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
+        return Err(CustomRecognizerError::Common {
+            source: Box::new(TestDenyAllError::DenyAll),
+        });
+    }
+}
+
+#[derive(Debug, Snafu)]
+enum TestDenyAllError {
+    #[snafu(display("deny all"))]
+    DenyAll,
 }

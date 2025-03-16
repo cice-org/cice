@@ -1,19 +1,18 @@
 pub mod config;
 
-use std::{future::Future, pin::Pin, sync::Arc};
+use alloc::sync::Arc;
 
 use alloc::{string::String, vec::Vec};
 use config::BaseTaskConfig;
-use futures::{
-    future::{select, select_ok, Either, Fuse, FusedFuture},
-    select, FutureExt, StreamExt,
-};
+use futures::{select, FutureExt, StreamExt};
 use snafu::Snafu;
 
+use crate::message::task::TaskMessage;
+use crate::message::Message;
 use crate::{
     context::Context,
     controller::{Controller, ControllerError},
-    recognizer::{CustomRecognizerError, Recognizer, RecognizerError},
+    recognizer::{Recognizer, RecognizerError},
     resource::ResourceData,
 };
 
@@ -39,6 +38,12 @@ impl TaskInner {
 
 impl Task {
     async fn try_run(&self, context: &Context) -> Result<TaskResult, TaskError> {
+        Self::send_task_message(
+            context,
+            TaskMessage::TryExec {
+                id: self.base().task_name.clone(),
+            },
+        );
         let controller = self.get_controller(context)?;
         let recognizer = self.get_recognizer(context)?;
         //Merge Controller output_action
@@ -58,6 +63,13 @@ impl Task {
         })?;
         // TODO match arms by macro
         if let Some(recognizer) = recognizer.ext_image() {
+            Self::send_task_message(
+                context,
+                TaskMessage::ExecController {
+                    task_id: self.base().task_name.clone(),
+                    controller_id: self.base().controller_id.clone(),
+                },
+            );
             let output = controller
                 .ext_output()
                 .unwrap()
@@ -66,6 +78,13 @@ impl Task {
                 .exec(&controller_output_action)
                 .await
                 .map_err(Into::<ControllerError>::into)?;
+            Self::send_task_message(
+                context,
+                TaskMessage::ExecRecognizer {
+                    task_id: self.base().task_name.clone(),
+                    recognizer_id: self.base().recognizer_id.clone(),
+                },
+            );
             recognizer
                 .exec(&self.0.recognizer_action, output)
                 .await
@@ -77,13 +96,28 @@ impl Task {
                 },
             });
         }
-        Ok(TaskResult::Success)
+        Self::send_task_message(
+            context,
+            TaskMessage::ExecSuccess {
+                id: self.base().task_name.clone(),
+            },
+        );
+
+        Ok(TaskResult::Success {
+            id: self.base().task_name.clone(),
+        })
     }
 
     pub(crate) async fn run_with_context(
         &self,
         context: &Context,
     ) -> Result<TaskResult, TaskError> {
+        Self::send_task_message(
+            context,
+            TaskMessage::Enter {
+                id: self.base().task_name.clone(),
+            },
+        );
         let inner = self.0.as_ref();
         let tasks: Vec<Task> = inner
             .base
@@ -148,6 +182,16 @@ impl Task {
                 })?;
         return wrapper.get_or_init().map_err(|e| e.into());
     }
+
+    fn base(&self) -> &BaseTaskConfig {
+        self.0.as_ref().base()
+    }
+
+    fn send_task_message(context: &Context, msg: TaskMessage) {
+        if let Err(e) = context.try_send_message(Message::TaskMessage(msg)) {
+            log::error!("Failed to send message {e}");
+        }
+    }
 }
 
 impl<T: TaskData> From<T> for Task {
@@ -172,7 +216,7 @@ pub trait TaskData {
 
 #[derive(Debug, Clone)]
 pub enum TaskResult {
-    Success,
+    Success { id: TaskId },
     NoPendingTask,
     TaskCancelled,
 }

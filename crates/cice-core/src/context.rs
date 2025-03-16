@@ -1,6 +1,7 @@
 use futures::future::BoxFuture;
 
 use crate::controller::{Controller, ControllerError, ControllerId};
+use crate::message::Message;
 use crate::recognizer::{Recognizer, RecognizerError, RecognizerId};
 use crate::resource::ResourceData;
 use crate::task::{Task, TaskData, TaskError, TaskId, TaskResult};
@@ -80,10 +81,12 @@ impl RecognizerWrapper {
     }
 }
 
+#[derive(Clone)]
 pub struct ContextHandler(Arc<ContextHandlerInner>);
 
-pub struct ContextHandlerInner {
+struct ContextHandlerInner {
     cancel_sender: async_channel::Sender<()>,
+    message_recv: async_channel::Receiver<Message>,
 }
 
 impl ContextHandler {
@@ -94,6 +97,14 @@ impl ContextHandler {
     pub fn try_cancel(&self) -> Result<(), async_channel::TrySendError<()>> {
         self.0.cancel_sender.try_send(())
     }
+
+    pub async fn recv(&self) -> Result<Message, async_channel::RecvError> {
+        self.0.message_recv.recv().await
+    }
+
+    pub fn try_recv(&self) -> Result<Message, async_channel::TryRecvError> {
+        self.0.message_recv.try_recv()
+    }
 }
 
 pub struct ContextBuilder {
@@ -102,19 +113,23 @@ pub struct ContextBuilder {
     reconizers: HashMap<RecognizerId, RecognizerWrapper>,
     context_handler: ContextHandler,
     cancel_recv: async_channel::Receiver<()>,
+    message_sender: async_channel::Sender<Message>,
 }
 
 impl ContextBuilder {
     pub fn new() -> Self {
-        let (send, recv) = async_channel::bounded(1); //Cancel signal should be sent only once
+        let (cancel_send, cancel_recv) = async_channel::bounded(1); //Cancel signal should be sent only once
+        let (message_send, message_recv) = async_channel::bounded(20);
         Self {
             tasks: HashMap::new(),
             controllers: HashMap::new(),
             reconizers: HashMap::new(),
             context_handler: ContextHandler(Arc::new(ContextHandlerInner {
-                cancel_sender: send,
+                cancel_sender: cancel_send,
+                message_recv: message_recv,
             })),
-            cancel_recv: recv,
+            cancel_recv,
+            message_sender: message_send,
         }
     }
     pub fn add_task<T: TaskData>(&mut self, task_data: T) -> &mut Self {
@@ -175,7 +190,9 @@ impl ContextBuilder {
             tasks: self.tasks,
             controllers: self.controllers,
             reconizers: self.reconizers,
+            handler: self.context_handler,
             cancel_recv: self.cancel_recv,
+            message_sender: self.message_sender,
         }))
     }
 }
@@ -184,7 +201,9 @@ struct ContextInner {
     tasks: HashMap<TaskId, Task>,
     controllers: HashMap<ControllerId, ControllerWrapper>,
     reconizers: HashMap<RecognizerId, RecognizerWrapper>,
+    handler: ContextHandler,
     cancel_recv: async_channel::Receiver<()>,
+    message_sender: async_channel::Sender<Message>,
 }
 
 pub struct Context(Arc<ContextInner>);
@@ -192,11 +211,26 @@ pub struct Context(Arc<ContextInner>);
 impl Context {
     pub async fn run(&self, entry: TaskId) -> Result<TaskResult, TaskError> {
         if let Some(task) = self.0.tasks.get(&entry) {
-            return task.run_with_context(self).await;
+            let mut task_res = task.run_with_context(self).await;
+            while let Ok(ref res) = task_res {
+                match res {
+                    TaskResult::Success { id } => {
+                        task_res = self.get_task(&id).unwrap().run_with_context(self).await;
+                        continue;
+                    }
+                    TaskResult::NoPendingTask => return Ok(TaskResult::NoPendingTask),
+                    TaskResult::TaskCancelled => return Ok(TaskResult::TaskCancelled),
+                }
+            }
+            task_res
         } else {
             log::error!("Entry Task {entry} not found");
             return Err(TaskError::UnknownTask { id: entry });
         }
+    }
+
+    pub fn get_handler(&self) -> ContextHandler {
+        self.0.handler.clone()
     }
 
     pub(crate) fn get_controller(&self, id: &ControllerId) -> Option<&ControllerWrapper> {
@@ -213,5 +247,13 @@ impl Context {
 
     pub(crate) async fn get_cancel_signal(&self) -> Result<(), async_channel::RecvError> {
         self.0.cancel_recv.recv().await
+    }
+
+    // Always drop message if channel is full in try_send_message
+    pub(crate) fn try_send_message(
+        &self,
+        msg: Message,
+    ) -> Result<(), async_channel::TrySendError<Message>> {
+        self.0.message_sender.try_send(msg)
     }
 }

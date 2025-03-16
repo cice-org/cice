@@ -1,0 +1,20 @@
+{
+    "Task1":{
+        "next_task": ["Task2"],
+        "interrupt_task": [],
+        "controller_id": "test_controller",
+        "recognizer_id": "test_recognizer"
+    },
+    "Task2":{
+        "next_task": ["Task3"],
+        "interrupt_task": [],
+        "controller_id": "test_controller",
+        "recognizer_id": "test_recognizer"
+      },
+      "Task3":{
+        "next_task": [],
+        "interrupt_task": [],
+        "controller_id": "test_controller",
+        "recognizer_id": "test_recognizer"
+      }
+}
