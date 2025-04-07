@@ -12,12 +12,12 @@ updates:
   - package-ecosystem: "cargo"
     directories:
       - "/"
-      - "crates/cice",
-      - "crates/cice-core",
-      - "crates/cice-action",
-      - "crates/cice-debug",
-      - "crates/cice-lang",
-      - "crates/cice-controllers/*",
-      - "crates/cice-recognizers/*",
+      - "crates/cice"
+      - "crates/cice-core"
+      - "crates/cice-action"
+      - "crates/cice-debug"
+      - "crates/cice-lang"
+      - "crates/cice-controllers/*"
+      - "crates/cice-recognizers/*"
     schedule:
       interval: "weekly"
