@@ -22,6 +22,16 @@ jobs:
           submodules: recursive
       - name: Install Rust nightly
         run: rustup update nightly
+      - name: Install Opencv Dependencies #TODO extract install dependency into a seperate reusable workflow
+        run: script/dependency/opencv/install.sh
+        shell: bash
+      - name: Set environment variables (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "OPENCV_INCLUDE_PATHS=C:\tools\opencv\build\include" >> $GITHUB_ENV |
+          echo "OPENCV_LINK_LIBS=opencv_world410" >> $GITHUB_ENV |
+          echo "OPENCV_LINK_PATHS=C:\tools\opencv\build\x64\vc15\lib" >> $GITHUB_ENV
+        shell: bash
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage
