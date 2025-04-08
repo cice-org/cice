@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use crate::Action;
+use crate::types::Rect;
 
 #[derive(Serialize, Deserialize)]
-#[serde(untagged)]
+#[non_exhaustive]
 pub enum ControllerOutputAction {
+    #[serde(rename = "screen_capture")]
     ScreenCapture(ScreenCaptureTarget),
 }
-
-impl Action for ControllerOutputAction {}
 
 pub type WindowId = u64;
 #[derive(Serialize, Deserialize)]
@@ -20,4 +19,5 @@ pub enum ScreenCaptureTarget {
 #[derive(Serialize, Deserialize)]
 pub struct ScreenCaptureWindowData {
     pub id: Option<WindowId>,
+    pub area: Option<Rect>,
 }
