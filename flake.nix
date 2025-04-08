@@ -12,9 +12,17 @@
     extra-substituters = "https://devenv.cachix.org";
   };
 
-  outputs = { self, nixpkgs, devenv, utils,  ... } @ inputs:
+  outputs = { self, nixpkgs, devenv, utils, fenix, ... } @ inputs:
      utils.lib.eachDefaultSystem (system:
-    let pkgs = nixpkgs.legacyPackages."${system}";
+    let
+      pkgs = nixpkgs.legacyPackages."${system}";
+      # 通过 Fenix 定义包含 miri 的 nightly 工具链[1](@ref)
+      rust-toolchain = fenix.packages.${system}.combine [
+        fenix.packages.${system}.latest.rustc
+        fenix.packages.${system}.latest.cargo
+        fenix.packages.${system}.latest.miri
+        fenix.packages.${system}.latest.rust-src  # Miri 需要源码分析[1](@ref)
+      ];
     in
     {
       packages.${system}.devenv-up = self.devShells.${system}.default.config.procfileScript;
@@ -35,6 +43,7 @@
               # Used by libvnc START
               zlib
               # Used by libvnc END
+              rust-toolchain  # 注入自定义工具链
             ];
 
             env = {
@@ -57,7 +66,7 @@
             languages = {
               rust = {
                 enable = true;
-                channel = "nightly";
+                toolchain = rust-toolchain;
               };
               c.enable = true;
             };
