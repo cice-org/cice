@@ -56,6 +56,10 @@ impl TaskData for TestTaskData {
         None
     }
 
+    fn controller_input_action_ext(&self) -> Option<cice_core::resource::ResourceData> {
+        None
+    }
+
     fn recognizer_action(&self) -> cice_core::resource::ResourceData {
         json!({})
     }
