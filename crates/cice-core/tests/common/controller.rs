@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use async_trait::async_trait;
 use cice_core::{
     controller::{
@@ -8,7 +10,7 @@ use cice_core::{
     resource::ResourceData,
 };
 
-use crate::TestImage;
+use crate::{common::recognizer::RECO_RESULT, TestImage};
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct BaseControllerConfig {
@@ -55,7 +57,11 @@ impl Controller for TestController {
 #[async_trait]
 impl InputController for TestController {
     async fn exec(&self, _input_action: &ResourceData) -> Result<(), CustomControllerError> {
-        todo!()
+        assert_eq!(
+            *_input_action,
+            serde_json::Value::from_str(RECO_RESULT).unwrap()
+        );
+        Ok(())
     }
 }
 
