@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use async_trait::async_trait;
 use cice_core::controller::output::image::ImageOutput;
 use cice_core::recognizer::CustomRecognizerError;
@@ -58,6 +60,8 @@ impl ImageRecognizer for TestImageRecognizer {
     }
 }
 
+pub const RECO_RESULT: &str = r#"{"value":"Accept_All"}"#;
+
 pub struct AcceptAllRecognizer {}
 
 impl Recognizer for AcceptAllRecognizer {
@@ -84,7 +88,7 @@ impl ImageRecognizer for AcceptAllRecognizer {
         _action: &ResourceData,
         _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
-        return Ok(json!({}));
+        return Ok(serde_json::Value::from_str(RECO_RESULT).unwrap());
     }
 }
 
