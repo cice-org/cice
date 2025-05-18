@@ -6,5 +6,10 @@ devenv.local.nix
 # direnv
 .direnv
 
+# Cargo
+Cargo.lock
+.cargo/config
+.cargo/config.toml
+
 # pre-commit
 .pre-commit-config.yaml
