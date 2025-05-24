@@ -4,11 +4,10 @@ use async_trait::async_trait;
 use cice_core::controller::output::image::ImageOutput;
 use cice_core::recognizer::CustomRecognizerError;
 use cice_core::{
-    recognizer::{image::ImageRecognizer, Recognizer, RecognizerError},
+    recognizer::{image::ImageRecognizer, Recognizer},
     resource::ResourceData,
 };
 use serde_json::json;
-use snafu::Snafu;
 
 pub struct AcceptAllRecognizer {}
 

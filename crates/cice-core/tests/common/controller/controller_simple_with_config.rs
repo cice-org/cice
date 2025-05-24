@@ -10,10 +10,7 @@ use cice_core::{
     resource::ResourceData,
 };
 
-use crate::{
-    common::recognizer::{SimpleRecognizerConfig, RECO_ACCEPT_ALL_RESULT},
-    Image,
-};
+use crate::{common::recognizer::RECO_ACCEPT_ALL_RESULT, Image};
 
 use super::ControllerConfig;
 
