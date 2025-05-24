@@ -1,10 +1,10 @@
 {
     "controller":{
-        "id":"test_controller",
+        "id":"test_controller_simple_with_config",
         "port": "5690"
     },
     "recognizer":{
-        "id":"recognizer_Image",
+        "id":"recognizer_simple_with_config",
         "path":"./"
     }
 }

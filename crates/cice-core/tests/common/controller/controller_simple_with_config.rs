@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use async_trait::async_trait;
 use cice_core::{
     controller::{
@@ -8,7 +10,12 @@ use cice_core::{
     resource::ResourceData,
 };
 
-use crate::TestImage;
+use crate::{
+    common::recognizer::{TestSimpleRecognizerConfig, RECO_ACCEPT_ALL_RESULT},
+    TestImage,
+};
+
+use super::TestControllerConfig;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct BaseControllerConfig {
@@ -16,32 +23,44 @@ pub struct BaseControllerConfig {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
-pub struct TestControllerConfig {
+pub struct TestSimpleControllerConfig {
     pub base: Option<BaseControllerConfig>,
     pub port: String,
 }
 
-pub struct TestController {}
+impl TryFrom<TestControllerConfig> for TestSimpleControllerConfig {
+    type Error = ();
 
-// #[derive(Serialize, Deserialize, Message)]
-// pub struct TestControllerConfig {
-//     #[prost(string, tag = "1")]
-//     port: String,
-// }
+    fn try_from(value: TestControllerConfig) -> Result<Self, Self::Error> {
+        match value {
+            TestControllerConfig::Simple(test_simple_controller_config) => {
+                return Ok(test_simple_controller_config)
+            }
+            _ => return Err(()),
+        }
+    }
+}
 
-impl Controller for TestController {
+pub struct TestSimpleControllerWithConfig {
+    config: TestSimpleControllerConfig,
+}
+
+impl TestSimpleControllerWithConfig {
+    pub fn new(config: TestSimpleControllerConfig) -> Self {
+        return Self { config };
+    }
+}
+
+impl Controller for TestSimpleControllerWithConfig {
     fn name(&self) -> cice_core::controller::ControllerId {
-        "test_controller".into()
+        "test_controller_simple_with_config".into()
     }
 
     fn init(&self, resource: &cice_core::resource::ResourceData) -> Result<(), ControllerError> {
-        let config: TestControllerConfig =
-            serde_json::from_value(resource.clone()).map_err(|e| ControllerError::Err {
-                source: CustomControllerError::Common {
-                    source: Box::new(e),
-                },
-            })?;
-        println!("port: {}", config.port);
+        assert_eq!(
+            *resource,
+            serde_json::to_value(self.config.clone()).unwrap()
+        );
         Ok(())
     }
     fn ext_input(&self) -> Option<cice_core::controller::InputControllerOps> {
@@ -53,14 +72,18 @@ impl Controller for TestController {
 }
 
 #[async_trait]
-impl InputController for TestController {
+impl InputController for TestSimpleControllerWithConfig {
     async fn exec(&self, _input_action: &ResourceData) -> Result<(), CustomControllerError> {
-        todo!()
+        assert_eq!(
+            *_input_action,
+            serde_json::Value::from_str(RECO_ACCEPT_ALL_RESULT).unwrap()
+        );
+        Ok(())
     }
 }
 
 #[async_trait]
-impl ImageOutputController for TestController {
+impl ImageOutputController for TestSimpleControllerWithConfig {
     async fn exec(
         &self,
         _output_action: &ResourceData,
@@ -70,7 +93,7 @@ impl ImageOutputController for TestController {
     }
 }
 
-impl OutputController for TestController {
+impl OutputController for TestSimpleControllerWithConfig {
     fn ext_image(&self) -> Option<cice_core::controller::output::ImageOutputControllerOps> {
         Some(self)
     }

@@ -2,25 +2,25 @@
     "Task1":{
         "next_task": ["Task2_Deny","Task2"],
         "interrupt_task": [],
-        "controller_id": "test_controller",
+        "controller_id": "test_controller_simple_with_config",
         "recognizer_id": "recognizer_AcceptAll"
     },
     "Task2_Deny":{
         "next_task": ["Task3"],
         "interrupt_task": [],
-        "controller_id": "test_controller",
+        "controller_id": "test_controller_simple_with_config",
         "recognizer_id": "recognizer_DenyAll"
       },
       "Task2":{
         "next_task": ["Task3"],
         "interrupt_task": [],
-        "controller_id": "test_controller",
+        "controller_id": "test_controller_simple_with_config",
         "recognizer_id": "recognizer_AcceptAll"
       },
       "Task3":{
         "next_task": [],
         "interrupt_task": [],
-        "controller_id": "test_controller",
+        "controller_id": "test_controller_simple_with_config",
         "recognizer_id": "recognizer_AcceptAll"
       }
 }

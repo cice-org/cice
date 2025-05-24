@@ -2,13 +2,13 @@
   "test": {
     "next_task": ["NextTest"],
     "interrupt_task": [],
-    "controller_id": "test_controller",
+    "controller_id": "test_controller_simple_with_config",
     "recognizer_id": "recognizer_AcceptAll"
   },
   "NextTest": {
     "next_task": [],
     "interrupt_task": [],
-    "controller_id": "test_controller",
+    "controller_id": "test_controller_simple_with_config",
     "recognizer_id": "recognizer_AcceptAll"
   }
 }
