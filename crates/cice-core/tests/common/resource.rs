@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! TestImage {
+macro_rules! Image {
     ($caseName:expr) => {
         concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -10,8 +10,8 @@ macro_rules! TestImage {
 }
 
 #[macro_export]
-macro_rules! TestImageData {
+macro_rules! ImageData {
     ($caseName:expr) => {
-        include_bytes!(TestImage!($caseName))
+        include_bytes!(Image!($caseName))
     };
 }

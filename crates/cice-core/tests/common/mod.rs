@@ -1,14 +1,14 @@
 pub mod action;
 pub mod controller;
 pub mod recognizer;
-pub mod resourece;
+pub mod resource;
 pub mod task;
 
-use controller::TestControllerConfig;
-use recognizer::TestImageRecognizerConfig;
+use controller::ControllerConfig;
+use recognizer::RecognizerConfig;
 
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct TestConfig {
-    pub controller: Option<TestControllerConfig>,
-    pub recognizer: Option<TestImageRecognizerConfig>,
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+pub struct Config {
+    pub controller: Option<ControllerConfig>,
+    pub recognizer: Option<RecognizerConfig>,
 }

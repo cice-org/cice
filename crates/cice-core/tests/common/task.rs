@@ -14,10 +14,10 @@ pub struct BaseTaskConfigContent {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct TestTasks(HashMap<String, BaseTaskConfigContent>);
+pub struct Tasks(HashMap<String, BaseTaskConfigContent>);
 
-impl From<TestTasks> for Vec<TestTaskData> {
-    fn from(value: TestTasks) -> Self {
+impl From<Tasks> for Vec<TestTaskData> {
+    fn from(value: Tasks) -> Self {
         let mut vec = vec![];
         for task in value.0 {
             vec.push(TestTaskData {

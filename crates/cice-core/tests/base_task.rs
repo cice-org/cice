@@ -1,11 +1,11 @@
 use cice_core::context::ContextBuilder;
 use cice_core::message::{task::TaskMessage, Message};
-use common::recognizer::{AcceptAllRecognizer, DenyAllRecognizer};
+use common::recognizer::{AcceptAllRecognizer, DenyAllRecognizer, SimpleRecognizerWithConfig};
 use common::{
-    controller::TestController,
-    recognizer::TestImageRecognizer,
-    task::{TestTaskData, TestTasks},
-    TestConfig,
+    controller::SimpleControllerWithConfig,
+    recognizer::AssertImageRecognizer,
+    task::{Tasks, TestTaskData},
+    Config,
 };
 
 mod common;
@@ -14,18 +14,22 @@ mod common;
 async fn config() {
     let mut builder = ContextBuilder::new();
     let config_str = include_str!("task_config/json/base_config.json");
-    let base_config: TestConfig = serde_json::from_str(config_str).unwrap();
+    let base_config: Config = serde_json::from_str(config_str).unwrap();
     builder.add_controller((
-        Box::new(TestController {}),
+        Box::new(SimpleControllerWithConfig::new(
+            base_config.controller.clone().unwrap().try_into().unwrap(),
+        )),
         serde_json::to_value(base_config.controller.unwrap()).unwrap(),
     ));
     builder.add_recognizer((
-        Box::new(TestImageRecognizer {}),
+        Box::new(SimpleRecognizerWithConfig::new(
+            base_config.recognizer.clone().unwrap().try_into().unwrap(),
+        )),
         serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
     ));
     builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
     let task_config = include_str!("task_config/json/base_task.json");
-    let task_datas: TestTasks = serde_json::from_str(task_config).unwrap();
+    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
     let task_datas: Vec<TestTaskData> = task_datas.into();
     for task in task_datas {
         builder.add_task(task);
@@ -39,20 +43,22 @@ async fn config() {
 async fn task_sequence() {
     let mut builder = ContextBuilder::new();
     let config_str = include_str!("task_config/json/base_config.json");
-    let base_config: TestConfig = serde_json::from_str(config_str).unwrap();
+    let base_config: Config = serde_json::from_str(config_str).unwrap();
     builder.add_controller((
-        Box::new(TestController {}),
+        Box::new(SimpleControllerWithConfig::new(
+            base_config.controller.clone().unwrap().try_into().unwrap(),
+        )),
         serde_json::to_value(base_config.controller.unwrap()).unwrap(),
     ));
     builder.add_recognizer((
-        Box::new(TestImageRecognizer {}),
+        Box::new(AssertImageRecognizer {}),
         serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
     ));
     builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
     builder.add_recognizer((Box::new(DenyAllRecognizer {}), serde_json::json!({})));
     // Load task sequence config
     let task_config = include_str!("task_config/json/task_sequence.json");
-    let task_datas: TestTasks = serde_json::from_str(task_config).unwrap();
+    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
     let task_datas: Vec<TestTaskData> = task_datas.into();
 
     for task in task_datas {
