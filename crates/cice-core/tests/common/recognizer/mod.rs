@@ -14,6 +14,6 @@ pub struct BaseRecognizerConfig {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
 #[serde(untagged)]
-pub enum TestRecognizerConfig {
-    Simple(TestSimpleRecognizerConfig),
+pub enum RecognizerConfig {
+    Simple(SimpleRecognizerConfig),
 }

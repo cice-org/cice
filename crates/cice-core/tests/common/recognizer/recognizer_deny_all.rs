@@ -34,13 +34,13 @@ impl ImageRecognizer for DenyAllRecognizer {
         _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Err(CustomRecognizerError::Common {
-            source: Box::new(TestDenyAllError::DenyAll),
+            source: Box::new(DenyAllError::DenyAll),
         });
     }
 }
 
 #[derive(Debug, Snafu)]
-enum TestDenyAllError {
+enum DenyAllError {
     #[snafu(display("deny all"))]
     DenyAll,
 }

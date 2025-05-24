@@ -4,6 +4,6 @@ pub use controller_simple_with_config::*;
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]
 #[serde(untagged)]
-pub enum TestControllerConfig {
-    Simple(TestSimpleControllerConfig),
+pub enum ControllerConfig {
+    Simple(SimpleControllerConfig),
 }

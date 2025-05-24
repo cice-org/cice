@@ -7,9 +7,9 @@ use cice_core::{
 };
 use serde_json::json;
 
-pub struct TestAssertImageRecognizer {}
+pub struct AssertImageRecognizer {}
 
-impl Recognizer for TestAssertImageRecognizer {
+impl Recognizer for AssertImageRecognizer {
     fn name(&self) -> String {
         "recognizer_assert_image".into()
     }
@@ -27,7 +27,7 @@ impl Recognizer for TestAssertImageRecognizer {
 }
 
 #[async_trait]
-impl ImageRecognizer for TestAssertImageRecognizer {
+impl ImageRecognizer for AssertImageRecognizer {
     async fn exec(
         &self,
         _action: &ResourceData,

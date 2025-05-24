@@ -11,11 +11,11 @@ use cice_core::{
 };
 
 use crate::{
-    common::recognizer::{TestSimpleRecognizerConfig, RECO_ACCEPT_ALL_RESULT},
-    TestImage,
+    common::recognizer::{SimpleRecognizerConfig, RECO_ACCEPT_ALL_RESULT},
+    Image,
 };
 
-use super::TestControllerConfig;
+use super::ControllerConfig;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct BaseControllerConfig {
@@ -23,37 +23,37 @@ pub struct BaseControllerConfig {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
-pub struct TestSimpleControllerConfig {
+pub struct SimpleControllerConfig {
     pub base: Option<BaseControllerConfig>,
     pub port: String,
 }
 
-impl TryFrom<TestControllerConfig> for TestSimpleControllerConfig {
+impl TryFrom<ControllerConfig> for SimpleControllerConfig {
     type Error = ();
 
-    fn try_from(value: TestControllerConfig) -> Result<Self, Self::Error> {
+    fn try_from(value: ControllerConfig) -> Result<Self, Self::Error> {
         match value {
-            TestControllerConfig::Simple(test_simple_controller_config) => {
-                return Ok(test_simple_controller_config)
+            ControllerConfig::Simple(simple_controller_config) => {
+                return Ok(simple_controller_config)
             }
             _ => return Err(()),
         }
     }
 }
 
-pub struct TestSimpleControllerWithConfig {
-    config: TestSimpleControllerConfig,
+pub struct SimpleControllerWithConfig {
+    config: SimpleControllerConfig,
 }
 
-impl TestSimpleControllerWithConfig {
-    pub fn new(config: TestSimpleControllerConfig) -> Self {
+impl SimpleControllerWithConfig {
+    pub fn new(config: SimpleControllerConfig) -> Self {
         return Self { config };
     }
 }
 
-impl Controller for TestSimpleControllerWithConfig {
+impl Controller for SimpleControllerWithConfig {
     fn name(&self) -> cice_core::controller::ControllerId {
-        "test_controller_simple_with_config".into()
+        "controller_simple_with_config".into()
     }
 
     fn init(&self, resource: &cice_core::resource::ResourceData) -> Result<(), ControllerError> {
@@ -72,7 +72,7 @@ impl Controller for TestSimpleControllerWithConfig {
 }
 
 #[async_trait]
-impl InputController for TestSimpleControllerWithConfig {
+impl InputController for SimpleControllerWithConfig {
     async fn exec(&self, _input_action: &ResourceData) -> Result<(), CustomControllerError> {
         assert_eq!(
             *_input_action,
@@ -83,17 +83,17 @@ impl InputController for TestSimpleControllerWithConfig {
 }
 
 #[async_trait]
-impl ImageOutputController for TestSimpleControllerWithConfig {
+impl ImageOutputController for SimpleControllerWithConfig {
     async fn exec(
         &self,
         _output_action: &ResourceData,
     ) -> Result<cice_core::controller::output::image::ImageOutput, CustomControllerError> {
-        let image = image::open(TestImage!("testCase.jpg")).unwrap();
+        let image = image::open(Image!("testCase.jpg")).unwrap();
         return Ok(image);
     }
 }
 
-impl OutputController for TestSimpleControllerWithConfig {
+impl OutputController for SimpleControllerWithConfig {
     fn ext_image(&self) -> Option<cice_core::controller::output::ImageOutputControllerOps> {
         Some(self)
     }

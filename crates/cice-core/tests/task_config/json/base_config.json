@@ -1,6 +1,6 @@
 {
     "controller":{
-        "id":"test_controller_simple_with_config",
+        "id":"controller_simple_with_config",
         "port": "5690"
     },
     "recognizer":{

@@ -6,37 +6,37 @@ use cice_core::{
 };
 use serde_json::json;
 
-use super::{BaseRecognizerConfig, TestRecognizerConfig};
+use super::{BaseRecognizerConfig, RecognizerConfig};
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
-pub struct TestSimpleRecognizerConfig {
+pub struct SimpleRecognizerConfig {
     pub base: ::core::option::Option<BaseRecognizerConfig>,
     pub path: String,
 }
-pub struct TestSimpleRecognizerWithConfig {
-    config: TestSimpleRecognizerConfig,
+pub struct SimpleRecognizerWithConfig {
+    config: SimpleRecognizerConfig,
 }
 
-impl TryFrom<TestRecognizerConfig> for TestSimpleRecognizerConfig {
+impl TryFrom<RecognizerConfig> for SimpleRecognizerConfig {
     type Error = ();
 
-    fn try_from(value: TestRecognizerConfig) -> Result<Self, Self::Error> {
+    fn try_from(value: RecognizerConfig) -> Result<Self, Self::Error> {
         match value {
-            TestRecognizerConfig::Simple(test_simple_recognizer_config) => {
-                return Ok(test_simple_recognizer_config)
+            RecognizerConfig::Simple(simple_recognizer_config) => {
+                return Ok(simple_recognizer_config)
             }
             _ => return Err(()),
         }
     }
 }
 
-impl TestSimpleRecognizerWithConfig {
-    pub fn new(config: TestSimpleRecognizerConfig) -> Self {
+impl SimpleRecognizerWithConfig {
+    pub fn new(config: SimpleRecognizerConfig) -> Self {
         return Self { config };
     }
 }
 
-impl Recognizer for TestSimpleRecognizerWithConfig {
+impl Recognizer for SimpleRecognizerWithConfig {
     fn name(&self) -> String {
         "recognizer_simple_with_config".into()
     }
@@ -58,7 +58,7 @@ impl Recognizer for TestSimpleRecognizerWithConfig {
 }
 
 #[async_trait]
-impl ImageRecognizer for TestSimpleRecognizerWithConfig {
+impl ImageRecognizer for SimpleRecognizerWithConfig {
     async fn exec(
         &self,
         _action: &ResourceData,
