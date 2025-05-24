@@ -3,9 +3,11 @@ name: cice-core
 on:
   push:
     path:
+      - '.github/workflows/core.yml'
       - 'crates/cice-core/**'
   pull_request:
     path:
+      - '.github/workflows/core.yml'
       - 'crates/cice-core/**'
 
 env:

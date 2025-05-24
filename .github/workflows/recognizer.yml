@@ -3,10 +3,12 @@ name: cice-recognizer
 on:
   push:
     path:
+      - '.github/workflows/recognizer.yml'
       - 'crates/cice-recognizers/**'
       - 'crates/cice-core/**'
   pull_request:
     path:
+      - '.github/workflows/recognizer.yml'
       - 'crates/cice-recognizers/**'
       - 'crates/cice-core/**'
 

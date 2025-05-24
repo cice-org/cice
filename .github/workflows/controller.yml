@@ -3,10 +3,12 @@ name: cice-controller
 on:
   push:
     path:
+      - '.github/workflows/controller.yml'
       - 'crates/cice-controllers/**'
       - 'crates/cice-core/**'
   pull_request:
     path:
+      - '.github/workflows/controller.yml'
       - 'crates/cice-controllers/**'
       - 'crates/cice-core/**'
 
