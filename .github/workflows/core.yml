@@ -1,6 +1,12 @@
 name: cice-core
 
-on: ["push", "pull_request"]
+on:
+  push:
+    path:
+      - 'crates/cice-core/**'
+  pull_request:
+    path:
+      - 'crates/cice-core/**'
 
 env:
   CARGO_TERM_COLOR: always

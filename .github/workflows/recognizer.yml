@@ -1,6 +1,14 @@
 name: cice-recognizer
 
-on: ["push", "pull_request"]
+on:
+  push:
+    path:
+      - 'crates/cice-recognizers/**'
+      - 'crates/cice-core/**'
+  pull_request:
+    path:
+      - 'crates/cice-recognizers/**'
+      - 'crates/cice-core/**'
 
 env:
   CARGO_TERM_COLOR: always
