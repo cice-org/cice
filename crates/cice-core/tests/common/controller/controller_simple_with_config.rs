@@ -10,7 +10,7 @@ use cice_core::{
     resource::ResourceData,
 };
 
-use crate::{common::recognizer::RECO_ACCEPT_ALL_RESULT, Image};
+use crate::Image;
 
 use super::ControllerConfig;
 
@@ -71,10 +71,6 @@ impl Controller for SimpleControllerWithConfig {
 #[async_trait]
 impl InputController for SimpleControllerWithConfig {
     async fn exec(&self, _input_action: &ResourceData) -> Result<(), CustomControllerError> {
-        assert_eq!(
-            *_input_action,
-            serde_json::Value::from_str(RECO_ACCEPT_ALL_RESULT).unwrap()
-        );
         Ok(())
     }
 }

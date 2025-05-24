@@ -13,6 +13,11 @@ pub type RecognizeResult = ResourceData;
 
 pub trait Recognizer: Send + Sync {
     fn name(&self) -> RecognizerId;
+    /// ## Calling time
+    /// Init Recognizer, would be called at the first time when the recognizer is called or any override config [recognizer_config_ext](crate::task::TaskData::recognizer_config_ext())
+    /// ## Notice
+    /// This is only necessary to be implemented when Recognizer supports `reinitialze` or needs `lazy initialize`. For most of the cases,
+    /// keeping this function as a dummy implementation (by returning `Ok(())` directly) and passing an initialized and immutable structure (use `::new()` for example) is always the best solution
     fn init(&self, resource: &ResourceData) -> Result<(), RecognizerError>;
     fn require_input(&self) -> Option<ResourceData>; //Require input from a OutputController
     fn ext_image(&self) -> Option<ImageRecognizerOps> {

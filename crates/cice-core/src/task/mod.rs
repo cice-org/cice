@@ -28,6 +28,7 @@ pub struct TaskInner {
     controller_config_ext: Option<ResourceData>,
     recognizer_config_ext: Option<ResourceData>,
     controller_output_action: Option<ResourceData>,
+    controller_input_action: Option<ResourceData>,
     recognizer_action: ResourceData,
 }
 
@@ -72,7 +73,7 @@ impl Task {
             reason: "missing controller output action",
         })?;
         // TODO match arms by macro
-        if let Some(recognizer) = recognizer.ext_image() {
+        let mut reco_result = if let Some(recognizer) = recognizer.ext_image() {
             Self::send_task_message(
                 context,
                 TaskMessage::ExecController {
@@ -80,6 +81,7 @@ impl Task {
                     controller_id: self.base().controller_id.clone(),
                 },
             );
+            //FIXME no unwrap here
             let output = controller
                 .ext_output()
                 .unwrap()
@@ -98,14 +100,23 @@ impl Task {
             recognizer
                 .exec(&self.0.recognizer_action, output)
                 .await
-                .map_err(Into::<RecognizerError>::into)?;
+                .map_err(Into::<RecognizerError>::into)?
         } else {
             return Err(TaskError::RecognizerError {
                 source: RecognizerError::IncompatibleRecognizer {
                     id: recognizer.name(),
                 },
             });
+        };
+        if let Some(action) = self.0.controller_input_action.as_ref() {
+            merge(&mut reco_result, action.clone())
         }
+        controller
+            .ext_input()
+            .unwrap()
+            .exec(&reco_result)
+            .await
+            .map_err(Into::<ControllerError>::into)?;
         Self::send_task_message(
             context,
             TaskMessage::ExecSuccess {
@@ -251,6 +262,7 @@ impl<T: TaskData> From<T> for Task {
             controller_config_ext: value.controller_config_ext(),
             recognizer_config_ext: value.recognizer_config_ext(),
             controller_output_action: value.controller_output_action_ext(),
+            controller_input_action: value.controller_input_action_ext(),
             recognizer_action: value.recognizer_action(),
         }))
     }
@@ -261,6 +273,7 @@ pub trait TaskData {
     fn controller_config_ext(&self) -> Option<ResourceData>;
     fn recognizer_config_ext(&self) -> Option<ResourceData>;
     fn controller_output_action_ext(&self) -> Option<ResourceData>;
+    fn controller_input_action_ext(&self) -> Option<ResourceData>;
     fn recognizer_action(&self) -> ResourceData;
 }
 

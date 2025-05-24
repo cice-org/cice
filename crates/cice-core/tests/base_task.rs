@@ -1,5 +1,7 @@
+use crate::common::recognizer::SimpleImageInputRecognizer;
 use cice_core::context::ContextBuilder;
 use cice_core::message::{task::TaskMessage, Message};
+use common::controller::{ControllerWithInputAndOutputAction, SimpleImageController};
 use common::recognizer::{AcceptAllRecognizer, DenyAllRecognizer, SimpleRecognizerWithConfig};
 use common::{
     controller::SimpleControllerWithConfig,
@@ -103,4 +105,50 @@ async fn task_sequence() {
     }
 
     assert_eq!(executed_tasks, expected_order);
+}
+
+#[tokio::test]
+async fn simple_image() {
+    let mut builder = ContextBuilder::new();
+    let config_str = include_str!("task_config/json/base_config.json");
+    let base_config: Config = serde_json::from_str(config_str).unwrap();
+    builder.add_controller((
+        Box::new(SimpleImageController::new()),
+        serde_json::to_value(base_config.controller.unwrap()).unwrap(),
+    ));
+    builder.add_recognizer((
+        Box::new(SimpleImageInputRecognizer {}),
+        serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
+    ));
+    builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
+    let task_config = include_str!("task_config/json/simple_image.json");
+    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
+    let task_datas: Vec<TestTaskData> = task_datas.into();
+    for task in task_datas {
+        builder.add_task(task);
+    }
+    let ret = builder.build().run("entry".to_string()).await;
+    println!("{ret:?}");
+    assert!(ret.is_ok())
+}
+
+#[tokio::test]
+async fn controller_input_and_output_action() {
+    let mut builder = ContextBuilder::new();
+    let config_str = include_str!("task_config/json/base_config.json");
+    let base_config: Config = serde_json::from_str(config_str).unwrap();
+    builder.add_controller((
+        Box::new(ControllerWithInputAndOutputAction::new()),
+        serde_json::to_value(base_config.controller.unwrap()).unwrap(),
+    ));
+    builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
+    let task_config = include_str!("task_config/json/controller_input_and_output_action.json");
+    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
+    let task_datas: Vec<TestTaskData> = task_datas.into();
+    for task in task_datas {
+        builder.add_task(task);
+    }
+    let ret = builder.build().run("entry".to_string()).await;
+    println!("{ret:?}");
+    assert!(ret.is_ok())
 }

@@ -1,0 +1,14 @@
+{
+  "entry": {
+    "next_task": ["Next"],
+    "interrupt_task": [],
+    "controller_id": "controller_simple_with_config",
+    "recognizer_id": "recognizer_AcceptAll"
+  },
+  "Next": {
+    "next_task": [],
+    "interrupt_task": [],
+    "controller_id": "controller_simple_image",
+    "recognizer_id": "recognizer_simple_image_input"
+  }
+}
