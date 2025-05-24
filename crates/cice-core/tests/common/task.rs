@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use cice_core::task::config::BaseTaskConfig;
 use cice_core::task::TaskData;
+use cice_core::{resource::ResourceData, task::config::BaseTaskConfig};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -11,6 +11,8 @@ pub struct BaseTaskConfigContent {
     pub interrupt_task: Vec<String>,
     pub controller_id: String,
     pub recognizer_id: String,
+    pub controller_input: Option<ResourceData>,
+    pub controller_output: Option<ResourceData>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -28,6 +30,8 @@ impl From<Tasks> for Vec<TestTaskData> {
                     controller_id: task.1.controller_id,
                     recognizer_id: task.1.recognizer_id,
                 },
+                controller_input: task.1.controller_input,
+                controller_output: task.1.controller_output,
             });
         }
         vec
@@ -37,6 +41,8 @@ impl From<Tasks> for Vec<TestTaskData> {
 #[derive(Serialize, Deserialize)]
 pub struct TestTaskData {
     base: BaseTaskConfig,
+    controller_input: Option<ResourceData>,
+    controller_output: Option<ResourceData>,
 }
 
 impl TaskData for TestTaskData {
@@ -53,11 +59,11 @@ impl TaskData for TestTaskData {
     }
 
     fn controller_output_action_ext(&self) -> Option<cice_core::resource::ResourceData> {
-        None
+        self.controller_output.clone()
     }
 
     fn controller_input_action_ext(&self) -> Option<cice_core::resource::ResourceData> {
-        None
+        self.controller_input.clone()
     }
 
     fn recognizer_action(&self) -> cice_core::resource::ResourceData {
