@@ -1,7 +1,9 @@
 use crate::common::recognizer::SimpleImageInputRecognizer;
 use cice_core::context::ContextBuilder;
 use cice_core::message::{task::TaskMessage, Message};
-use common::controller::{ControllerWithInputAndOutputAction, DummyController, SimpleImageController};
+use common::controller::{
+    ControllerWithInputAndOutputAction, DummyController, SimpleImageController,
+};
 use common::recognizer::{
     AcceptAllRecognizer, DenyAllRecognizer, SimpleRecognizerWithAction, SimpleRecognizerWithConfig,
 };
