@@ -32,7 +32,7 @@ impl Recognizer for AcceptAllRecognizer {
 impl ImageRecognizer for AcceptAllRecognizer {
     async fn exec(
         &self,
-        _action: &ResourceData,
+        _action: Option<&ResourceData>,
         _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Ok(serde_json::Value::from_str(RECO_ACCEPT_ALL_RESULT).unwrap());

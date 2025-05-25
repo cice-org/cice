@@ -61,7 +61,7 @@ impl Recognizer for SimpleRecognizerWithConfig {
 impl ImageRecognizer for SimpleRecognizerWithConfig {
     async fn exec(
         &self,
-        _action: &ResourceData,
+        _action: Option<&ResourceData>,
         _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Ok(json!({}));

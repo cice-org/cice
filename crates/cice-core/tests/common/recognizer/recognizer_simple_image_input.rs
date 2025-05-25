@@ -34,7 +34,7 @@ impl Recognizer for SimpleImageInputRecognizer {
 impl ImageRecognizer for SimpleImageInputRecognizer {
     async fn exec(
         &self,
-        _action: &ResourceData,
+        _action: Option<&ResourceData>,
         data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         assert_eq!(
