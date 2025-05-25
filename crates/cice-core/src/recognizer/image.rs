@@ -8,7 +8,7 @@ use super::{CustomRecognizerError, RecognizeResult, Recognizer};
 pub trait ImageRecognizer: Recognizer {
     async fn exec(
         &self,
-        action: &ResourceData,
+        action: Option<&ResourceData>,
         data: ImageOutput,
     ) -> Result<RecognizeResult, CustomRecognizerError>;
 }

@@ -13,6 +13,8 @@ pub struct BaseTaskConfigContent {
     pub recognizer_id: String,
     pub controller_input: Option<ResourceData>,
     pub controller_output: Option<ResourceData>,
+    #[serde(rename = "reco")]
+    pub recognizer_action: Option<ResourceData>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -32,6 +34,7 @@ impl From<Tasks> for Vec<TestTaskData> {
                 },
                 controller_input: task.1.controller_input,
                 controller_output: task.1.controller_output,
+                recognizer_action: task.1.recognizer_action,
             });
         }
         vec
@@ -43,6 +46,7 @@ pub struct TestTaskData {
     base: BaseTaskConfig,
     controller_input: Option<ResourceData>,
     controller_output: Option<ResourceData>,
+    recognizer_action: Option<ResourceData>,
 }
 
 impl TaskData for TestTaskData {
@@ -66,7 +70,7 @@ impl TaskData for TestTaskData {
         self.controller_input.clone()
     }
 
-    fn recognizer_action(&self) -> cice_core::resource::ResourceData {
-        json!({})
+    fn recognizer_action(&self) -> Option<cice_core::resource::ResourceData> {
+        self.recognizer_action.clone()
     }
 }

@@ -30,7 +30,7 @@ impl Recognizer for DenyAllRecognizer {
 impl ImageRecognizer for DenyAllRecognizer {
     async fn exec(
         &self,
-        _action: &ResourceData,
+        _action: Option<&ResourceData>,
         _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Err(CustomRecognizerError::Common {

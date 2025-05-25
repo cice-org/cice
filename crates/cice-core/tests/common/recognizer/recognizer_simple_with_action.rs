@@ -1,7 +1,5 @@
 use std::str::FromStr;
 
-use crate::common::recognizer::RECO_ACCEPT_ALL_RESULT;
-use crate::Image;
 use async_trait::async_trait;
 use cice_core::controller::output::image::ImageOutput;
 use cice_core::recognizer::CustomRecognizerError;
@@ -11,11 +9,11 @@ use cice_core::{
 };
 use serde_json::json;
 
-pub struct SimpleImageInputRecognizer {}
+pub struct SimpleRecognizerWithAction {}
 
-impl Recognizer for SimpleImageInputRecognizer {
+impl Recognizer for SimpleRecognizerWithAction {
     fn name(&self) -> String {
-        "recognizer_simple_image_input".into()
+        "recognizer_simple_with_action".into()
     }
 
     fn init(&self, _resource: &ResourceData) -> Result<(), cice_core::recognizer::RecognizerError> {
@@ -31,16 +29,17 @@ impl Recognizer for SimpleImageInputRecognizer {
 }
 
 #[async_trait]
-impl ImageRecognizer for SimpleImageInputRecognizer {
+impl ImageRecognizer for SimpleRecognizerWithAction {
     async fn exec(
         &self,
-        _action: Option<&ResourceData>,
-        data: ImageOutput,
+        action: Option<&ResourceData>,
+        _data: ImageOutput,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         assert_eq!(
-            data.as_bytes(),
-            image::open(Image!("testCase.jpg")).unwrap().as_bytes()
+            *action.unwrap().to_string(),
+            serde_json::to_value(SIMPLE_RECOGNIZER_ACTION).unwrap()
         );
-        return Ok(serde_json::Value::from_str(RECO_ACCEPT_ALL_RESULT).unwrap());
+        return Ok(json!({}));
     }
 }
+const SIMPLE_RECOGNIZER_ACTION: &str = r#"{"area":[0,0,100,100]}"#;

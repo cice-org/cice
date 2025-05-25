@@ -29,7 +29,7 @@ pub struct TaskInner {
     recognizer_config_ext: Option<ResourceData>,
     controller_output_action: Option<ResourceData>,
     controller_input_action: Option<ResourceData>,
-    recognizer_action: ResourceData,
+    recognizer_action: Option<ResourceData>,
 }
 
 impl TaskInner {
@@ -98,7 +98,7 @@ impl Task {
                 },
             );
             recognizer
-                .exec(&self.0.recognizer_action, output)
+                .exec(self.0.recognizer_action.as_ref(), output)
                 .await
                 .map_err(Into::<RecognizerError>::into)?
         } else {
@@ -274,7 +274,7 @@ pub trait TaskData {
     fn recognizer_config_ext(&self) -> Option<ResourceData>;
     fn controller_output_action_ext(&self) -> Option<ResourceData>;
     fn controller_input_action_ext(&self) -> Option<ResourceData>;
-    fn recognizer_action(&self) -> ResourceData;
+    fn recognizer_action(&self) -> Option<ResourceData>;
 }
 
 #[derive(Debug, Clone)]
