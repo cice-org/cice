@@ -19,7 +19,11 @@ pub type ControllerId = String;
 /// - Controller is lazy initialized, which means the controller will be initialized when it is used for the first time
 pub trait Controller: Send + Sync {
     fn name(&self) -> ControllerId;
+    /// ## Calling time
     /// Init Controller, would be called at the first time when the controller is called or any override config [controller_config_ext](crate::task::TaskData::controller_config_ext())
+    ///## Notice
+    /// This is only necessary to be implemented when Controller supports `reinitialze` or needs `lazy initialize`. For most of the cases,
+    /// keeping this function as a dummy implementation (by returning `Ok(())` directly) and passing an initialized and immutable structure (use `::new()` for example) is always the best solution
     fn init(&self, init_cofig: &ResourceData) -> Result<(), ControllerError>;
     // Should any controller implement both input and output at once?
     fn ext_input(&self) -> Option<InputControllerOps> {
