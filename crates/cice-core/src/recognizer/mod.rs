@@ -1,16 +1,15 @@
 use core::error::Error;
 
 use alloc::boxed::Box;
-use image::ImageRecognizer;
+use async_trait::async_trait;
 use snafu::Snafu;
 
-use crate::resource::ResourceData;
-
-pub mod image;
+use crate::{controller::ControllerData, resource::ResourceData};
 
 pub type RecognizerId = String;
 pub type RecognizeResult = ResourceData;
 
+#[async_trait]
 pub trait Recognizer: Send + Sync {
     fn name(&self) -> RecognizerId;
     /// ## Calling time
@@ -20,25 +19,19 @@ pub trait Recognizer: Send + Sync {
     /// keeping this function as a dummy implementation (by returning `Ok(())` directly) and passing an initialized and immutable structure (use `::new()` for example) is always the best solution
     fn init(&self, resource: &ResourceData) -> Result<(), RecognizerError>;
     fn require_input(&self) -> Option<ResourceData>; //Require input from a OutputController
-    fn ext_image(&self) -> Option<ImageRecognizerOps> {
-        None
-    }
+    async fn exec(
+        &self,
+        action: Option<&ResourceData>,
+        data: ControllerData,
+    ) -> Result<RecognizeResult, CustomRecognizerError>;
 }
-
-#[macro_export]
-macro_rules! define_recognizer {
-    ($exttrait:ident , $extname:ident) => {
-        #[allow(missing_docs)]
-        pub type $extname<'a> = &'a dyn $exttrait;
-    };
-}
-
-define_recognizer!(ImageRecognizer, ImageRecognizerOps);
 
 #[derive(Debug, Snafu)]
 pub enum RecognizerError {
     #[snafu(display("recognizer {id} not found"))]
     RecognizerNotFound { id: RecognizerId },
+    /// ## Description
+    /// Showing that the incoming ControllerData is not supported in this recognizer
     #[snafu(display("recognizer {id} is not compatible"))]
     IncompatibleRecognizer { id: RecognizerId },
     #[snafu(display("outer recognizer error {source}"))]

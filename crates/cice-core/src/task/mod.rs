@@ -80,49 +80,35 @@ impl Task {
         .ok_or(TaskError::TaskConfigError {
             reason: "missing controller output action",
         })?;
-        // TODO match arms by macro
-        let mut reco_result = if let Some(recognizer) = recognizer.ext_image() {
-            Self::send_task_message(
-                context,
-                TaskMessage::ExecController {
-                    task_id: self.base().task_name.clone(),
-                    controller_id: self.base().controller_id.clone(),
-                },
-            );
-            //FIXME no unwrap here
-            let output = controller
-                .ext_output()
-                .unwrap()
-                .ext_image()
-                .unwrap()
-                .exec(&controller_output_action)
-                .await
-                .map_err(Into::<ControllerError>::into)?;
-            Self::send_task_message(
-                context,
-                TaskMessage::ExecRecognizer {
-                    task_id: self.base().task_name.clone(),
-                    recognizer_id: self.base().recognizer_id.clone(),
-                },
-            );
-            recognizer
-                .exec(self.0.recognizer_action.as_ref(), output)
-                .await
-                .map_err(Into::<RecognizerError>::into)?
-        } else {
-            return Err(TaskError::RecognizerError {
-                source: RecognizerError::IncompatibleRecognizer {
-                    id: recognizer.name(),
-                },
-            });
-        };
+
+        Self::send_task_message(
+            context,
+            TaskMessage::ExecController {
+                task_id: self.base().task_name.clone(),
+                controller_id: self.base().controller_id.clone(),
+            },
+        );
+        let output = controller
+            .exec_output(&controller_output_action)
+            .await
+            .map_err(Into::<ControllerError>::into)?;
+        Self::send_task_message(
+            context,
+            TaskMessage::ExecRecognizer {
+                task_id: self.base().task_name.clone(),
+                recognizer_id: self.base().recognizer_id.clone(),
+            },
+        );
+        let mut reco_result = recognizer
+            .exec(self.0.recognizer_action.as_ref(), output)
+            .await
+            .map_err(Into::<RecognizerError>::into)?;
+
         if let Some(action) = self.0.controller_input_action.as_ref() {
             merge(&mut reco_result, action.clone())
         }
         controller
-            .ext_input()
-            .unwrap()
-            .exec(&reco_result)
+            .exec_input(&reco_result)
             .await
             .map_err(Into::<ControllerError>::into)?;
         Self::send_task_message(
