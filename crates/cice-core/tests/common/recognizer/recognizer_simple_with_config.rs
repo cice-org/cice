@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use cice_core::{
-    controller::output::image::ImageOutput,
-    recognizer::{image::ImageRecognizer, CustomRecognizerError, Recognizer},
+    controller::ControllerData,
+    recognizer::{CustomRecognizerError, Recognizer},
     resource::ResourceData,
 };
 use serde_json::json;
@@ -36,6 +36,7 @@ impl SimpleRecognizerWithConfig {
     }
 }
 
+#[async_trait]
 impl Recognizer for SimpleRecognizerWithConfig {
     fn name(&self) -> String {
         "recognizer_simple_with_config".into()
@@ -48,22 +49,14 @@ impl Recognizer for SimpleRecognizerWithConfig {
         );
         Ok(())
     }
-    fn ext_image(&self) -> Option<cice_core::recognizer::ImageRecognizerOps> {
-        Some(self)
-    }
-
-    fn require_input(&self) -> Option<ResourceData> {
-        None
-    }
-}
-
-#[async_trait]
-impl ImageRecognizer for SimpleRecognizerWithConfig {
     async fn exec(
         &self,
         _action: Option<&ResourceData>,
-        _data: ImageOutput,
+        _data: ControllerData,
     ) -> Result<cice_core::recognizer::RecognizeResult, CustomRecognizerError> {
         return Ok(json!({}));
+    }
+    fn require_input(&self) -> Option<ResourceData> {
+        None
     }
 }

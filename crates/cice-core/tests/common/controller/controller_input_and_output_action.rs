@@ -1,10 +1,6 @@
 use async_trait::async_trait;
 use cice_core::{
-    controller::{
-        input::InputController,
-        output::{image::ImageOutputController, OutputController},
-        Controller, ControllerError, CustomControllerError,
-    },
+    controller::{Controller, ControllerError, CustomControllerError},
     resource::ResourceData,
 };
 use serde_json::json;
@@ -19,25 +15,17 @@ impl ControllerWithInputAndOutputAction {
     }
 }
 
+#[async_trait]
 impl Controller for ControllerWithInputAndOutputAction {
     fn name(&self) -> cice_core::controller::ControllerId {
         "controller_with_input_and_output_action".into()
     }
 
-    fn init(&self, resource: &cice_core::resource::ResourceData) -> Result<(), ControllerError> {
+    fn init(&self, _resource: &cice_core::resource::ResourceData) -> Result<(), ControllerError> {
         Ok(())
     }
-    fn ext_input(&self) -> Option<cice_core::controller::InputControllerOps> {
-        Some(self)
-    }
-    fn ext_output(&self) -> Option<cice_core::controller::OutputControllerOps> {
-        Some(self)
-    }
-}
 
-#[async_trait]
-impl InputController for ControllerWithInputAndOutputAction {
-    async fn exec(&self, input_action: &ResourceData) -> Result<(), CustomControllerError> {
+    async fn exec_input(&self, input_action: &ResourceData) -> Result<(), CustomControllerError> {
         assert_eq!(
             serde_json::to_string(input_action).unwrap(),
             json!({
@@ -48,21 +36,11 @@ impl InputController for ControllerWithInputAndOutputAction {
         );
         Ok(())
     }
-}
-
-#[async_trait]
-impl ImageOutputController for ControllerWithInputAndOutputAction {
-    async fn exec(
+    async fn exec_output(
         &self,
         _output_action: &ResourceData,
-    ) -> Result<cice_core::controller::output::image::ImageOutput, CustomControllerError> {
+    ) -> Result<cice_core::controller::ControllerData, CustomControllerError> {
         let image = image::open(Image!("testCase.jpg")).unwrap();
-        return Ok(image);
-    }
-}
-
-impl OutputController for ControllerWithInputAndOutputAction {
-    fn ext_image(&self) -> Option<cice_core::controller::output::ImageOutputControllerOps> {
-        Some(self)
+        return Ok(image.into());
     }
 }
