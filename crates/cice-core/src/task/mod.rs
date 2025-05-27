@@ -1,14 +1,13 @@
-pub mod config;
-
 use alloc::sync::Arc;
 
 use alloc::{string::String, vec::Vec};
-use config::BaseTaskConfig;
 use futures::{select, FutureExt, StreamExt};
 use snafu::Snafu;
 
+use crate::controller::ControllerId;
 use crate::message::task::TaskMessage;
 use crate::message::Message;
+use crate::recognizer::RecognizerId;
 use crate::utils::merge;
 use crate::{
     context::Context,
@@ -30,6 +29,15 @@ pub struct TaskInner {
     controller_output_action: Option<ResourceData>,
     controller_input_action: Option<ResourceData>,
     recognizer_action: Option<ResourceData>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
+pub struct BaseTaskConfig {
+    pub task_name: TaskId,
+    pub next_task: Vec<TaskId>,
+    pub interrupt_task: Vec<TaskId>,
+    pub controller_id: ControllerId,
+    pub recognizer_id: RecognizerId,
 }
 
 impl TaskInner {
