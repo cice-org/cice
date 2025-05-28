@@ -1,10 +1,6 @@
 use async_trait::async_trait;
 use cice_core::{
-    controller::{
-        input::InputController,
-        output::{image::ImageOutputController, OutputController},
-        Controller, ControllerError, CustomControllerError,
-    },
+    controller::{Controller, ControllerError, CustomControllerError, ImageData},
     resource::ResourceData,
 };
 
@@ -18,6 +14,7 @@ impl DummyController {
     }
 }
 
+#[async_trait]
 impl Controller for DummyController {
     fn name(&self) -> cice_core::controller::ControllerId {
         "dummy_controller".into()
@@ -26,34 +23,14 @@ impl Controller for DummyController {
     fn init(&self, _resource: &cice_core::resource::ResourceData) -> Result<(), ControllerError> {
         Ok(())
     }
-    fn ext_input(&self) -> Option<cice_core::controller::InputControllerOps> {
-        Some(self)
-    }
-    fn ext_output(&self) -> Option<cice_core::controller::OutputControllerOps> {
-        Some(self)
-    }
-}
-
-#[async_trait]
-impl InputController for DummyController {
-    async fn exec(&self, _input_action: &ResourceData) -> Result<(), CustomControllerError> {
+    async fn exec_input(&self, _input_action: &ResourceData) -> Result<(), CustomControllerError> {
         Ok(())
     }
-}
-
-#[async_trait]
-impl ImageOutputController for DummyController {
-    async fn exec(
+    async fn exec_output(
         &self,
         _output_action: &ResourceData,
-    ) -> Result<cice_core::controller::output::image::ImageOutput, CustomControllerError> {
+    ) -> Result<cice_core::controller::ControllerData, CustomControllerError> {
         let image = image::open(Image!("testCase.jpg")).unwrap();
-        return Ok(image);
-    }
-}
-
-impl OutputController for DummyController {
-    fn ext_image(&self) -> Option<cice_core::controller::output::ImageOutputControllerOps> {
-        Some(self)
+        return Ok(image.into());
     }
 }
