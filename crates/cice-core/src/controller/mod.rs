@@ -41,6 +41,8 @@ pub enum ControllerError {
 
 #[derive(Debug, Snafu)]
 pub enum CustomControllerError {
+    #[snafu(display("invalid action: {action:?}"))]
+    InvalidAction { action: Option<ResourceData> },
     #[snafu(display("fatal controller error: {source}"))]
     Fatal {
         source: Box<dyn Error + Send + Sync>,

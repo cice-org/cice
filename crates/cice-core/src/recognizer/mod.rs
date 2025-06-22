@@ -40,6 +40,10 @@ pub enum RecognizerError {
 
 #[derive(Debug, Snafu)]
 pub enum CustomRecognizerError {
+    #[snafu(display("invalid action: {action:?}"))]
+    InvalidAction { action: Option<ResourceData> },
+    #[snafu(display("invalid data"))]
+    InvalidData,
     #[snafu(display("fatal recognizer error: {source}"))]
     Fatal {
         source: Box<dyn Error + Send + Sync>,
