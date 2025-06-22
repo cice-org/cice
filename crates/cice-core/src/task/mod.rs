@@ -313,8 +313,9 @@ impl From<RecognizerError> for TaskError {
 }
 
 impl TaskError {
-    //return whether this erro Should break running
+    //return whether this error Should break running
     //TODO should extract a trait for CustomError to implement is_fatal()?
+    //TODO Is it really necessary to introduce such a fatal error to break the whole running?
     fn is_fatal(&self) -> bool {
         match self {
             TaskError::ControllerError {
@@ -322,12 +323,15 @@ impl TaskError {
             } => match source {
                 crate::controller::CustomControllerError::Fatal { source: _ } => true,
                 crate::controller::CustomControllerError::Common { source: _ } => false,
+                crate::controller::CustomControllerError::InvalidAction { action: _ } => false,
             },
             TaskError::RecognizerError {
                 source: RecognizerError::Err { source },
             } => match source {
                 crate::recognizer::CustomRecognizerError::Fatal { source: _ } => true,
                 crate::recognizer::CustomRecognizerError::Common { source: _ } => false,
+                crate::recognizer::CustomRecognizerError::InvalidAction { action: _ } => false,
+                crate::recognizer::CustomRecognizerError::InvalidData => false,
             },
             _ => true,
         }

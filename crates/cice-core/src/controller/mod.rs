@@ -41,6 +41,8 @@ pub enum ControllerError {
 
 #[derive(Debug, Snafu)]
 pub enum CustomControllerError {
+    #[snafu(display("invalid action: {action:?}"))]
+    InvalidAction { action: Option<ResourceData> },
     #[snafu(display("fatal controller error: {source}"))]
     Fatal {
         source: Box<dyn Error + Send + Sync>,
@@ -76,12 +78,12 @@ impl TryFrom<ControllerData> for ImageData {
         //     return Err(());
         // }
         let ControllerData::Image(data) = value;
-        return Ok(data);
+        Ok(data)
     }
 }
 
 impl From<ImageData> for ControllerData {
     fn from(value: ImageData) -> Self {
-        return Self::Image(value);
+        Self::Image(value)
     }
 }
