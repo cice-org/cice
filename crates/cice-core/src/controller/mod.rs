@@ -78,12 +78,12 @@ impl TryFrom<ControllerData> for ImageData {
         //     return Err(());
         // }
         let ControllerData::Image(data) = value;
-        return Ok(data);
+        Ok(data)
     }
 }
 
 impl From<ImageData> for ControllerData {
     fn from(value: ImageData) -> Self {
-        return Self::Image(value);
+        Self::Image(value)
     }
 }
