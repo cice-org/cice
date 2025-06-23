@@ -1,4 +1,8 @@
-cur_dir="$(dirname "$0")"
+#!/bin/bash
+
+set -xeu
+
+ci_dir="$(dirname "$0")"
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
 	os_family="Linux"
@@ -13,11 +17,24 @@ else
 fi
 
 if [[ "$os_family" == "Linux" ]]; then
-	# free up disk space in Github Actions image: https://github.com/actions/runner-images/issues/2840
-	sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
-	"$cur_dir/install-ubuntu.sh"
+	if [[ "${VCPKG_VERSION:-}" != "" ]]; then # vcpkg build
+		"$ci_dir/install-ubuntu-vcpkg.sh"
+	else
+		"$ci_dir/install-ubuntu.sh"
+	fi
 elif [[ "$os_family" == "macOS" ]]; then
-	"$cur_dir/install-macos-brew.sh"
+	if [[ "${BREW_OPENCV_VERSION:-}" != "" ]]; then # brew build
+		"$ci_dir/install-macos-brew.sh"
+	elif [[ "${VCPKG_VERSION:-}" != "" ]]; then # vcpkg build
+		"$ci_dir/install-macos-vcpkg.sh"
+	else
+		"$ci_dir/install-macos-framework.sh"
+	fi
 elif [[ "$os_family" == "Windows" ]]; then
-	"$cur_dir/install-windows-choco.sh"
+	export CHOCO_LLVM_VERSION=20.1.0 # https://community.chocolatey.org/packages/llvm#versionhistory
+	if [[ "${VCPKG_VERSION:-}" != "" ]]; then # vcpkg build
+		"$ci_dir/install-windows-vcpkg.sh"
+	else # chocolatey build
+		"$ci_dir/install-windows-chocolatey.sh"
+	fi
 fi
