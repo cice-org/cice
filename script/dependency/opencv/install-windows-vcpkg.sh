@@ -3,6 +3,10 @@
 set -xeu
 
 # install llvm from choco in place of vcpkg to speed things up
-choco install -y llvm
-# vcpkg install llvm  # It's too slow
-vcpkg install opencv4[contrib,nonfree]
+choco install -y llvm --version "$CHOCO_LLVM_VERSION"
+
+export VCPKG_DEFAULT_TRIPLET=x64-windows
+
+script_dir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+
+. "$script_dir/install-vcpkg.sh"

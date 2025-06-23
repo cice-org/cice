@@ -7,6 +7,12 @@ edition = "2021"
 cice-core = { version = "0.1.0", path = "../../cice-core" }
 cice-action = { version = "0.1.0", path = "../../cice-action" }
 opencv = { version = "0.94.2", features = ["clang-runtime"] }
+image = { workspace = true }
 async-trait = { workspace = true }
-
+serde = { workspace = true }
+serde_json = { workspace = true }
 [features]
+
+[dev-dependencies]
+itertools = '0.11.0'
+image = { workspace = true, features = ["jpeg", "png"] }

@@ -3,14 +3,14 @@ name: cice-recognizer
 on:
   push:
     path:
-      - '.github/workflows/recognizer.yml'
-      - 'crates/cice-recognizers/**'
-      - 'crates/cice-core/**'
+      - ".github/workflows/recognizer.yml"
+      - "crates/cice-recognizers/**"
+      - "crates/cice-core/**"
   pull_request:
     path:
-      - '.github/workflows/recognizer.yml'
-      - 'crates/cice-recognizers/**'
-      - 'crates/cice-core/**'
+      - ".github/workflows/recognizer.yml"
+      - "crates/cice-recognizers/**"
+      - "crates/cice-core/**"
 
 env:
   CARGO_TERM_COLOR: always
@@ -20,7 +20,21 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        opencv-version:
+          - 4.11.0
+      include:
+        os:
+          - macos-latest
+        version:
+          brew: "@4"
     runs-on: ${{ matrix.os }}
+    env:
+      #Atlas_ROOT_DIR: /usr/include/ # for cmake to find lapacke.h
+      OPENCV_VERSION: ${{ matrix.opencv-version }}
+      BREW_OPENCV_VERSION: ${{ matrix.version.brew }}
+      #OPENCV_LINKAGE: ${{ matrix.linkage }}
+      # SCCACHE_GHA_ENABLED: "true"
+      # RUSTC_WRAPPER: "sccache"
     steps:
       - uses: actions/checkout@v4
       - name: Install Nightly Rust Toolchain
@@ -29,16 +43,6 @@ jobs:
       - name: Install Opencv Dependencies
         run: script/dependency/opencv/install.sh
         shell: bash
-      - name: Set environment variables (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          echo "OPENCV_INCLUDE_PATHS=C:\tools\opencv\build\include" >> $GITHUB_ENV |
-          echo "OPENCV_LINK_LIBS=opencv_world410" >> $GITHUB_ENV |
-          echo "OPENCV_LINK_PATHS=C:\tools\opencv\build\x64\vc15\lib" >> $GITHUB_ENV
+      - name: Test
+        run: script/ci/opencv/script.sh
         shell: bash
-      - name: Build
-        run: cargo build -p cice-recognizer-opencv --verbose
-      - name: Clippy
-        run: cargo clippy -p cice-recognizer-opencv --verbose
-      - name: Run tests
-        run: cargo test -p cice-recognizer-opencv  --verbose
