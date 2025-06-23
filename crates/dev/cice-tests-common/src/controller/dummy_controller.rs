@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use cice_core::{
-    controller::{Controller, ControllerError, CustomControllerError, ImageData},
+    controller::{Controller, ControllerError, CustomControllerError},
     resource::ResourceData,
 };
 
@@ -8,9 +8,15 @@ use crate::Image;
 
 pub struct DummyController {}
 
+impl Default for DummyController {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DummyController {
     pub fn new() -> Self {
-        return Self {};
+        Self {}
     }
 }
 

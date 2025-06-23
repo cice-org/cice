@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::common::recognizer::RECO_ACCEPT_ALL_RESULT;
+use crate::recognizer::RECO_ACCEPT_ALL_RESULT;
 use crate::Image;
 use async_trait::async_trait;
 use cice_core::controller::{ControllerData, ImageData};

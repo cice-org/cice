@@ -8,9 +8,15 @@ use crate::Image;
 
 pub struct SimpleImageController {}
 
+impl Default for SimpleImageController {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SimpleImageController {
     pub fn new() -> Self {
-        return Self {};
+        Self {}
     }
 }
 

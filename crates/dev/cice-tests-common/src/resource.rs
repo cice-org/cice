@@ -1,11 +1,7 @@
 #[macro_export]
 macro_rules! Image {
     ($caseName:expr) => {
-        concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/resource/image/",
-            $caseName
-        )
+        concat!(env!("CARGO_MANIFEST_DIR"), "/resource/image/", $caseName)
     };
 }
 
