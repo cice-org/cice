@@ -9,7 +9,7 @@ members = [
     "crates/cice-recognizers/*",
 
     #Test or dev only crates
-    "crates/cice-tests-common",
+    "crates/dev/*",
 ]
 resolver = "2"
 

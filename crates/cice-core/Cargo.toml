@@ -16,4 +16,4 @@ snafu = { workspace = true }
 [dev-dependencies]
 tokio = { workspace = true }
 image = { workspace = true, features = ["jpeg"] }
-cice-tests-common = { path = "../cice-tests-common" }
+cice-tests-common = { path = "../dev/cice-tests-common" }
