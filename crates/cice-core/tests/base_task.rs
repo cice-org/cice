@@ -1,20 +1,19 @@
-use crate::common::recognizer::SimpleImageInputRecognizer;
 use cice_core::context::ContextBuilder;
 use cice_core::message::{task::TaskMessage, Message};
-use common::controller::{
+
+use cice_tests_common::controller::{
     ControllerWithInputAndOutputAction, DummyController, SimpleImageController,
 };
-use common::recognizer::{
+use cice_tests_common::recognizer::SimpleImageInputRecognizer;
+use cice_tests_common::recognizer::{
     AcceptAllRecognizer, DenyAllRecognizer, SimpleRecognizerWithAction, SimpleRecognizerWithConfig,
 };
-use common::{
+use cice_tests_common::{
     controller::SimpleControllerWithConfig,
     recognizer::AssertImageRecognizer,
     task::{Tasks, TestTaskData},
     Config,
 };
-
-mod common;
 
 #[tokio::test]
 async fn config() {

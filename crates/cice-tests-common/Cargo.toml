@@ -1,5 +1,5 @@
 [package]
-name = "cice-core"
+name = "cice-tests-common"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,8 +12,7 @@ log = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 snafu = { workspace = true }
-
+cice-core = { path = "../cice-core" }
 [dev-dependencies]
 tokio = { workspace = true }
 image = { workspace = true, features = ["jpeg"] }
-cice-tests-common = { path = "../cice-tests-common" }

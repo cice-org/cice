@@ -1,9 +1,9 @@
-mod recognizer_accept_all;
-mod recognizer_assert_image;
-mod recognizer_deny_all;
-mod recognizer_simple_image_input;
-mod recognizer_simple_with_action;
-mod recognizer_simple_with_config;
+pub mod recognizer_accept_all;
+pub mod recognizer_assert_image;
+pub mod recognizer_deny_all;
+pub mod recognizer_simple_image_input;
+pub mod recognizer_simple_with_action;
+pub mod recognizer_simple_with_config;
 pub use recognizer_accept_all::*;
 pub use recognizer_assert_image::*;
 pub use recognizer_deny_all::*;
