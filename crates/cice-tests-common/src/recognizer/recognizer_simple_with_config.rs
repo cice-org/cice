@@ -22,17 +22,15 @@ impl TryFrom<RecognizerConfig> for SimpleRecognizerConfig {
 
     fn try_from(value: RecognizerConfig) -> Result<Self, Self::Error> {
         match value {
-            RecognizerConfig::Simple(simple_recognizer_config) => {
-                return Ok(simple_recognizer_config)
-            }
-            _ => return Err(()),
+            RecognizerConfig::Simple(simple_recognizer_config) => Ok(simple_recognizer_config),
+            _ => Err(()),
         }
     }
 }
 
 impl SimpleRecognizerWithConfig {
     pub fn new(config: SimpleRecognizerConfig) -> Self {
-        return Self { config };
+        Self { config }
     }
 }
 

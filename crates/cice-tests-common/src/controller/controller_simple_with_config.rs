@@ -24,10 +24,8 @@ impl TryFrom<ControllerConfig> for SimpleControllerConfig {
 
     fn try_from(value: ControllerConfig) -> Result<Self, Self::Error> {
         match value {
-            ControllerConfig::Simple(simple_controller_config) => {
-                return Ok(simple_controller_config)
-            }
-            _ => return Err(()),
+            ControllerConfig::Simple(simple_controller_config) => Ok(simple_controller_config),
+            _ => Err(()),
         }
     }
 }
@@ -38,7 +36,7 @@ pub struct SimpleControllerWithConfig {
 
 impl SimpleControllerWithConfig {
     pub fn new(config: SimpleControllerConfig) -> Self {
-        return Self { config };
+        Self { config }
     }
 }
 

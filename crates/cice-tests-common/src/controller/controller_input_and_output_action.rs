@@ -9,9 +9,15 @@ use crate::Image;
 
 pub struct ControllerWithInputAndOutputAction {}
 
+impl Default for ControllerWithInputAndOutputAction {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ControllerWithInputAndOutputAction {
     pub fn new() -> Self {
-        return Self {};
+        Self {}
     }
 }
 
