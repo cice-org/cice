@@ -3,12 +3,12 @@ name: cice-core
 on:
   push:
     path:
-      - '.github/workflows/core.yml'
-      - 'crates/cice-core/**'
+      - ".github/workflows/core.yml"
+      - "crates/cice-core/**"
   pull_request:
     path:
-      - '.github/workflows/core.yml'
-      - 'crates/cice-core/**'
+      - ".github/workflows/core.yml"
+      - "crates/cice-core/**"
 
 env:
   CARGO_TERM_COLOR: always
@@ -24,9 +24,6 @@ jobs:
       - name: Install Nightly Rust Toolchain
         run: rustup update nightly
       - uses: Swatinem/rust-cache@v2
-      - name: Install Dependencies
-        run: script/dependency/protobuf/install.sh
-        shell: bash
       - name: Build
         run: cargo build -p cice-core --verbose
       - name: Clippy
