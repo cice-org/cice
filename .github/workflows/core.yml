@@ -5,10 +5,13 @@ on:
     path:
       - ".github/workflows/core.yml"
       - "crates/cice-core/**"
+      - "Cargo.toml"
+
   pull_request:
     path:
       - ".github/workflows/core.yml"
       - "crates/cice-core/**"
+      - "Cargo.toml"
 
 env:
   CARGO_TERM_COLOR: always
