@@ -39,7 +39,6 @@
               opencv
               cmake
               pkg-config
-              protobuf
               # Used by libvnc START
               zlib
               # Used by libvnc END
