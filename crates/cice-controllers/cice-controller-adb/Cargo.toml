@@ -1,0 +1,15 @@
+[package]
+name = "cice-controller-adb"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+adb_client = "2.1.10"
+cice-core = { version = "0.1.0", path = "../../cice-core" }
+cice-action = { version = "0.1.0", path = "../../cice-action" }
+
+image = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+futures = { workspace = true }
