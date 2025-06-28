@@ -1,6 +1,7 @@
 use std::net::{IpAddr, SocketAddr};
 
 use adb_client::{ADBDeviceExt, ADBTcpDevice, RustADBError};
+
 use async_trait::async_trait;
 use cice_action::{
     controller::{
@@ -10,14 +11,7 @@ use cice_action::{
     types::Point,
 };
 use cice_core::{
-    controller::{
-        input::InputController,
-        output::{
-            image::{ImageOutput, ImageOutputController},
-            OutputController,
-        },
-        Controller, CustomControllerError,
-    },
+    controller::{Controller, ControllerData, CustomControllerError},
     resource::ResourceData,
 };
 use futures::lock::Mutex;
@@ -80,6 +74,7 @@ impl AdbController {
     }
 }
 
+#[async_trait]
 impl Controller for AdbController {
     fn name(&self) -> cice_core::controller::ControllerId {
         "adb".to_string()
@@ -92,11 +87,26 @@ impl Controller for AdbController {
         //TODO support lazy init or reinit here
         Ok(())
     }
-}
 
-#[async_trait]
-impl InputController for AdbController {
-    async fn exec(&self, action: &ResourceData) -> Result<(), CustomControllerError> {
+    /// Fetch data from target device. Such as screen capture
+    async fn exec_output(
+        &self,
+        action: &ResourceData,
+    ) -> Result<ControllerData, CustomControllerError> {
+        let action: AdbControllerImageOutputAction = serde_json::from_value(action.clone())
+            .map_err(|e| CustomControllerError::Fatal { source: e.into() })?;
+        match action {
+            ControllerOutputAction::ScreenCapture(_screen_capture_target) => self
+                .screen_capture()
+                .await
+                .map(image::DynamicImage::ImageRgba8),
+            _ => todo!(),
+        }
+        .map_err(|e| CustomControllerError::Common { source: e.into() })
+        .map(Into::into)
+    }
+    /// Input events or data to the target device. Such as click at a position, or input text to the device
+    async fn exec_input(&self, action: &ResourceData) -> Result<(), CustomControllerError> {
         let action: AdbControllerInputAction = serde_json::from_value(action.clone())
             .map_err(|e| CustomControllerError::Fatal { source: e.into() })?;
         match action {
@@ -109,27 +119,42 @@ impl InputController for AdbController {
     }
 }
 
-impl OutputController for AdbController {
-    fn ext_image(&self) -> Option<cice_core::controller::output::ImageOutputControllerOps> {
-        Some(self)
-    }
-}
+// #[async_trait]
+// impl InputController for AdbController {
+//     async fn exec(&self, action: &ResourceData) -> Result<(), CustomControllerError> {
+//         let action: AdbControllerInputAction = serde_json::from_value(action.clone())
+//             .map_err(|e| CustomControllerError::Fatal { source: e.into() })?;
+//         match action {
+//             ControllerInputAction::Click { pos } => self.tap(pos).await,
+//             ControllerInputAction::Swipe { from, to } => self.swipe(from, to).await,
+//             ControllerInputAction::KeyEvent { id } => self.keyevent(id).await,
+//             _ => todo!(),
+//         }
+//         .map_err(|e| CustomControllerError::Common { source: e.into() })
+//     }
+// }
 
-#[async_trait]
-impl ImageOutputController for AdbController {
-    async fn exec(&self, action: &ResourceData) -> Result<ImageOutput, CustomControllerError> {
-        let action: AdbControllerImageOutputAction = serde_json::from_value(action.clone())
-            .map_err(|e| CustomControllerError::Fatal { source: e.into() })?;
-        match action {
-            ControllerOutputAction::ScreenCapture(_screen_capture_target) => self
-                .screen_capture()
-                .await
-                .map(image::DynamicImage::ImageRgba8),
-            _ => todo!(),
-        }
-        .map_err(|e| CustomControllerError::Common { source: e.into() })
-    }
-}
+// impl OutputController for AdbController {
+//     fn ext_image(&self) -> Option<cice_core::controller::output::ImageOutputControllerOps> {
+//         Some(self)
+//     }
+// }
+
+// #[async_trait]
+// impl ImageOutputController for AdbController {
+//     async fn exec(&self, action: &ResourceData) -> Result<ImageOutput, CustomControllerError> {
+//         let action: AdbControllerImageOutputAction = serde_json::from_value(action.clone())
+//             .map_err(|e| CustomControllerError::Fatal { source: e.into() })?;
+//         match action {
+//             ControllerOutputAction::ScreenCapture(_screen_capture_target) => self
+//                 .screen_capture()
+//                 .await
+//                 .map(image::DynamicImage::ImageRgba8),
+//             _ => todo!(),
+//         }
+//         .map_err(|e| CustomControllerError::Common { source: e.into() })
+//     }
+// }
 
 type AdbControllerInputAction = ControllerInputAction;
 type AdbControllerImageOutputAction = ControllerOutputAction;
