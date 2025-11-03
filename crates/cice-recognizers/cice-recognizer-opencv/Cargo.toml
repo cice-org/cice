@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 cice-core = { version = "0.1.0", path = "../../cice-core" }
 cice-action = { version = "0.1.0", path = "../../cice-action" }
-opencv = { version = "0.94.2", features = ["clang-runtime"] }
+opencv = { version = "0.97.0", features = ["clang-runtime"] }
 image = { workspace = true }
 async-trait = { workspace = true }
 serde = { workspace = true }
