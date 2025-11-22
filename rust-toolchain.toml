@@ -1,0 +1,12 @@
+[toolchain]
+channel = "nightly"
+components = [
+    "rustc",
+    "cargo",
+    "rust-std",
+    "rustfmt",
+    "miri",
+    "clippy",
+    "rustc-src",
+]
+targets = ["x86_64-pc-windows-gnu", "x86_64-pc-windows-msvc"]

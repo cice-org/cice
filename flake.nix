@@ -16,12 +16,11 @@
      utils.lib.eachDefaultSystem (system:
     let
       pkgs = nixpkgs.legacyPackages."${system}";
+      pkgsCross = pkgs.pkgsCross;
       # 通过 Fenix 定义包含 miri 的 nightly 工具链[1](@ref)
       rust-toolchain = fenix.packages.${system}.combine [
-        fenix.packages.${system}.latest.rustc
-        fenix.packages.${system}.latest.cargo
-        fenix.packages.${system}.latest.miri
-        fenix.packages.${system}.latest.rust-src  # Miri 需要源码分析[1](@ref)
+        (fenix.packages.${system}.fromToolchainFile { file = ./rust-toolchain.toml; })
+        fenix.packages.${system}.targets.x86_64-pc-windows-gnu.latest.rust-std
       ];
     in
     {
@@ -30,6 +29,7 @@
         inherit inputs pkgs;
         modules = [
           ({ pkgs, config, ... }: {
+            overlays = [ fenix.overlays.default ];
             # This is your devenv configuration
             packages = with pkgs;[
               git
@@ -42,11 +42,18 @@
               # Used by libvnc START
               zlib
               # Used by libvnc END
-              rust-toolchain  # 注入自定义工具链
+              # rust-toolchain  # 注入自定义工具链
+              # Windows cross-compilation
+              pkgsCross.mingwW64.stdenv.cc
+              pkgsCross.mingwW64.windows.pthreads
             ];
 
             env = {
               LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
+              # Windows cross-compilation
+              # CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER = "${pkgsCross.mingwW64.stdenv.cc}/bin/x86_64-w64-mingw32-gcc";
+              # CC_x86_64_pc_windows_gnu = "${pkgsCross.mingwW64.stdenv.cc}/bin/x86_64-w64-mingw32-gcc";
+              # CXX_x86_64_pc_windows_gnu = "${pkgsCross.mingwW64.stdenv.cc}/bin/x86_64-w64-mingw32-g++";
             };
 
             enterShell = ''
@@ -65,7 +72,11 @@
             languages = {
               rust = {
                 enable = true;
+                channel = "nightly";
                 toolchain = rust-toolchain;
+                targets = [
+                  "x86_64-pc-windows-gnu"
+                ];
               };
               c.enable = true;
             };
