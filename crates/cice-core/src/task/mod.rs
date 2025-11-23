@@ -26,7 +26,7 @@ pub type TaskId = String;
 #[repr(transparent)]
 pub struct Task<'task, RUNTIME: Runtime>(Arc<TaskInner<'task, RUNTIME>>);
 
-impl<'task, RUNTIME: Runtime> Clone for Task<'task, RUNTIME> {
+impl<RUNTIME: Runtime> Clone for Task<'_, RUNTIME> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
@@ -75,7 +75,7 @@ impl<'task, RUNTIME: Runtime> TaskInner<'task, RUNTIME> {
     }
 }
 
-impl<'task, RUNTIME: Runtime> TaskInner<'task, RUNTIME> {
+impl<RUNTIME: Runtime> TaskInner<'_, RUNTIME> {
     pub(crate) fn config(&self) -> &TaskConfig {
         &self.config
     }
@@ -90,7 +90,7 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
             },
         );
 
-        self.0.action.recognize(&context.get_runtime()).await?;
+        self.0.action.recognize(context.get_runtime()).await?;
 
         Self::send_task_message(
             context,
@@ -110,11 +110,7 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
             },
         );
 
-        self.0
-            .action
-            .exec(&context.get_runtime())
-            .await
-            .map_err(|e| e.into())?;
+        self.0.action.exec(context.get_runtime()).await?;
 
         Self::send_task_message(
             context,
@@ -154,7 +150,8 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
             .next_task
             .iter()
             .filter_map(|id| {
-                (&context.get_task(id))
+                context
+                    .get_task(id)
                     .or_else(|| {
                         //Leaving it a log error instead of breaking running
                         log::error!("no task found for id {id}");
@@ -172,7 +169,7 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
         next_tasks.iter().for_each(|task| {
             task_futures.push(task.try_run(context).boxed());
         });
-        let  mut select_futures = futures::future::select_ok(task_futures).fuse();
+        let mut select_futures = futures::future::select_ok(task_futures).fuse();
         for _retry_count in 0..self.config().max_retry {
             futures::select! {
                    res = select_futures => match res {
@@ -189,9 +186,9 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
                 }
             }
         }
-        return Err(TaskError::TaskTimeOut {
+        Err(TaskError::TaskTimeOut {
             id: self.config().task_name.clone(),
-        });
+        })
     }
 
     fn config(&self) -> &TaskConfig {

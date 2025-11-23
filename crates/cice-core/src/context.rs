@@ -98,7 +98,7 @@ struct ContextInner<'task, RUNTIME: Runtime> {
 
 pub struct Context<'task, RUNTIME: Runtime>(Arc<ContextInner<'task, RUNTIME>>);
 
-impl<'task, RUNTIME: Runtime> Context<'task, RUNTIME> {
+impl<RUNTIME: Runtime> Context<'_, RUNTIME> {
     pub async fn run(&self, entry: TaskId) -> Result<TaskResult, TaskError> {
         if let Some(task) = self.0.tasks.get(&entry) {
             let mut task_res = task.run_with_context(self).await;
