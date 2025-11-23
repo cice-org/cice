@@ -1,5 +1,5 @@
 use cice_core::task::TaskData;
-use cice_core::{resource::ResourceData, task::BaseTaskConfig};
+use cice_core::{resource::ResourceData, task::TaskConfig};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 #[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
@@ -22,7 +22,7 @@ impl From<Tasks> for Vec<TestTaskData> {
         let mut vec = vec![];
         for task in value.0 {
             vec.push(TestTaskData {
-                base: BaseTaskConfig {
+                base: TaskConfig {
                     task_name: task.0,
                     next_task: task.1.next_task,
                     interrupt_task: task.1.interrupt_task,
@@ -40,14 +40,14 @@ impl From<Tasks> for Vec<TestTaskData> {
 
 #[derive(Serialize, Deserialize)]
 pub struct TestTaskData {
-    base: BaseTaskConfig,
+    base: TaskConfig,
     controller_input: Option<ResourceData>,
     controller_output: Option<ResourceData>,
     recognizer_action: Option<ResourceData>,
 }
 
 impl TaskData for TestTaskData {
-    fn base_data(&self) -> BaseTaskConfig {
+    fn config(&self) -> TaskConfig {
         self.base.clone()
     }
 
