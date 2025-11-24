@@ -58,13 +58,15 @@ pub struct Size {
 ///
 /// ```rust
 /// use cice_action_opencv::TemplateMatchAction;
+/// use cice_action_opencv::TemplateMatchConfig;
 ///
 /// let action = TemplateMatchAction::new(
 ///     "find_button",
-///     "/path/to/template.png",
-///     0.8,
-///     None,
-/// );
+///     TemplateMatchConfig {
+///         template_path: "/path/to/template.png".to_string(),
+///         threshold: 0.8,
+///         roi: None,
+///     });
 /// ```
 pub struct TemplateMatchAction {
     _name: String,
@@ -190,8 +192,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::convert::TryToCv;
-
     use super::*;
 
     #[test]
@@ -221,26 +221,26 @@ mod tests {
         assert_eq!(action.config.threshold, 0.9);
     }
 
+    const BASE_DIR: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/resource/template_match/",
+    );
+
+    fn open_image(file_name: &str) -> opencv::core::Mat {
+        return opencv::imgcodecs::imread(
+            format!("{}{}", BASE_DIR.to_string(), file_name.to_string()).as_str(),
+            opencv::imgcodecs::IMREAD_COLOR,
+        )
+        .unwrap();
+    }
+
     #[test]
     fn test_template_match_same_file() {
-        // 测试相同文件的模板匹配，应该完全匹配
-        let src_image = image::open(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/resource/template_match/src-1.jpg",
-        ))
-        .unwrap();
-
-        let template_image = image::open(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/resource/template_match/src-1.jpg",
-        ))
-        .unwrap();
-
-        let src_mat = src_image.try_to_cv().unwrap();
-        let template_mat = template_image.try_to_cv().unwrap();
+        let src_image = open_image("src-1.jpg");
+        let template_image = open_image("src-1.jpg");
 
         let result =
-            TemplateMatchAction::template_match(src_mat, &template_mat, None, 0.8).unwrap();
+            TemplateMatchAction::template_match(src_image, &template_image, None, 0.8).unwrap();
 
         // 相同文件应该在 (0, 0) 位置完全匹配，置信度应该非常高
         assert_eq!(result.position.x, 0);
@@ -252,23 +252,11 @@ mod tests {
     #[test]
     fn test_template_match_sub_file() {
         // 测试子图像的模板匹配
-        let src_image = image::open(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/resource/template_match/src-1.jpg",
-        ))
-        .unwrap();
-
-        let template_image = image::open(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/resource/template_match/template-1.jpg",
-        ))
-        .unwrap();
-
-        let src_mat = src_image.try_to_cv().unwrap();
-        let template_mat = template_image.try_to_cv().unwrap();
+        let src_image = open_image("src-1.jpg");
+        let template_image = open_image("template-1.jpg");
 
         let result =
-            TemplateMatchAction::template_match(src_mat, &template_mat, None, 0.8).unwrap();
+            TemplateMatchAction::template_match(src_image, &template_image, None, 0.8).unwrap();
 
         // 子图像应该在特定位置匹配，置信度应该很高
         assert_eq!(result.position.x, 0);
