@@ -85,6 +85,6 @@ rustc --print=cfg
 
 export RUST_BACKTRACE=full
 
-cargo build -p cice-recognizer-opencv --verbose
-cargo clippy -p cice-recognizer-opencv --verbose
-cargo test -p cice-recognizer-opencv  --verbose
+cargo build -p cice-action-opencv --verbose
+cargo clippy -p cice-action-opencv --verbose
+cargo test -p cice-action-opencv  --verbose

@@ -14,10 +14,9 @@ updates:
       - "/"
       - "crates/cice"
       - "crates/cice-core"
-      - "crates/cice-action"
       - "crates/cice-debug"
       - "crates/cice-lang"
-      - "crates/cice-controllers/*"
-      - "crates/cice-recognizers/*"
+      - "crates/cice-runtimes/*"
+      - "crates/cice-actions/*"
     schedule:
       interval: "weekly"
