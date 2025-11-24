@@ -2,14 +2,15 @@
 members = [
     "crates/cice",
     "crates/cice-core",
-    "crates/cice-action",
     "crates/cice-debug",
     "crates/cice-lang",
-    "crates/cice-controllers/*",
-    "crates/cice-recognizers/*",
+    "crates/cice-runtimes/*",
+    "crates/cice-actions/*",
 
     #Test or dev only crates
     "crates/dev/*",
+    #Examples
+    "crates/examples/*",
 ]
 resolver = "2"
 

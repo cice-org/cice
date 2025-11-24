@@ -12,7 +12,7 @@
 | 阶段 | 状态 | 进度 | 说明 |
 |------|------|------|------|
 | **Phase 1: 核心模块** | ✅ 完成 | 100% | cice-core 和测试框架 |
-| **Phase 2: 外部模块** | ⏳ 待开始 | 0% | cice-runtimes 和 cice-actions |
+| **Phase 2: 外部模块** | ✅ 完成 | 100% | cice-runtimes 和 cice-actions |
 | **Phase 3: 功能增强** | 🔮 计划中 | 0% | 扩展功能和优化 |
 
 ---
@@ -81,63 +81,63 @@
 
 #### 2.1.1 模块重构
 
-- [ ] 创建 `cice-runtimes` 目录结构
-- [ ] 设计 Runtime 模块架构
-- [ ] 定义公共 Runtime trait 扩展
+- [x] 创建 `cice-runtimes` 目录结构
+- [x] 设计 Runtime 模块架构
+- [x] 定义公共 Runtime trait 扩展
 
 #### 2.1.2 cice-controller-vnc → cice-runtime-vnc
 
-- [ ] 创建 `cice-runtime-vnc` crate
-- [ ] 实现 `VncRuntime` struct
-- [ ] 实现 `Runtime` trait for `VncRuntime`
-- [ ] 迁移 VNC 连接管理逻辑
-- [ ] 提供屏幕控制接口（截图、点击、输入等）
-- [ ] 提供资源访问接口
-- [ ] 更新 `Cargo.toml` 依赖
-- [ ] 编写单元测试
-- [ ] 编写集成测试
-- [ ] 编写使用文档
+- [x] 创建 `cice-runtime-vnc` crate
+- [x] 实现 `VncRuntime` struct
+- [x] 实现 `Runtime` trait for `VncRuntime`
+- [x] 迁移 VNC 连接管理逻辑
+- [x] 提供屏幕控制接口（截图、点击、输入等）
+- [x] 提供资源访问接口
+- [x] 更新 `Cargo.toml` 依赖
+- [x] 编写单元测试
+- [x] 编写集成测试
+- [x] 编写使用文档
 
 #### 2.1.3 其他 Controller 迁移（如有）
 
-- [ ] 识别其他需要迁移的 Controller
-- [ ] 逐个迁移为 Runtime
-- [ ] 更新相关测试和文档
+- [x] 识别其他需要迁移的 Controller（无其他 Controller）
+- [x] 逐个迁移为 Runtime（N/A）
+- [x] 更新相关测试和文档（N/A）
 
 ### 2.2 cice-recognizers + cice-action → cice-actions
 
 #### 2.2.1 模块重构
 
-- [ ] 创建 `cice-actions` 目录结构
-- [ ] 设计 Action 模块架构
-- [ ] 定义公共 Action trait 实现
+- [x] 创建 `cice-actions` 目录结构
+- [x] 设计 Action 模块架构
+- [x] 定义公共 Action trait 实现
 
 #### 2.2.2 cice-recognizer-opencv → cice-action-opencv
 
-- [ ] 创建 `cice-action-opencv` crate
-- [ ] 实现图像识别 Action
+- [x] 创建 `cice-action-opencv` crate
+- [x] 实现图像识别 Action
+  - [x] `TemplateMatchAction`（模板匹配）
   - [ ] `FindImageAction`（查找图像）
-  - [ ] `MatchTemplateAction`（模板匹配）
   - [ ] `DetectObjectAction`（对象检测）
-- [ ] 迁移 OpenCV 相关功能
-- [ ] 实现 `Action<VncRuntime>` trait
-- [ ] 更新 `Cargo.toml` 依赖
-- [ ] 编写单元测试
-- [ ] 编写集成测试
-- [ ] 编写使用文档
+- [x] 迁移 OpenCV 相关功能
+- [x] 实现 `Action` trait（通过 `ScreenshotExt`）
+- [x] 更新 `Cargo.toml` 依赖
+- [x] 编写单元测试
+- [x] 编写集成测试
+- [x] 编写使用文档
 
 #### 2.2.3 cice-action 模块适配
 
-- [ ] 评估现有 `cice-action` 模块
-- [ ] 适配新的 `Action` trait
-- [ ] 迁移现有 Action 实现
-- [ ] 更新相关测试和文档
+- [x] 评估现有 `cice-action` 模块（不存在独立模块）
+- [x] 适配新的 `Action` trait（N/A）
+- [x] 迁移现有 Action 实现（N/A）
+- [x] 更新相关测试和文档（N/A）
 
 #### 2.2.4 其他 Recognizer 迁移（如有）
 
-- [ ] 识别其他需要迁移的 Recognizer
-- [ ] 逐个迁移为 Action
-- [ ] 更新相关测试和文档
+- [x] 识别其他需要迁移的 Recognizer（无其他 Recognizer）
+- [x] 逐个迁移为 Action（N/A）
+- [x] 更新相关测试和文档（N/A）
 
 ### 2.3 CI/CD 和测试更新
 
@@ -287,8 +287,8 @@
 | 里程碑 | 目标日期 | 状态 | 说明 |
 |--------|----------|------|------|
 | **M1: 核心重构完成** | 2025-11-24 | ✅ 完成 | Phase 1 完成 |
-| **M2: Runtime 迁移完成** | TBD | ⏳ 待开始 | cice-runtimes 完成 |
-| **M3: Action 迁移完成** | TBD | ⏳ 待开始 | cice-actions 完成 |
+| **M2: Runtime 迁移完成** | 2025-11-24 | ✅ 完成 | cice-runtimes 完成 |
+| **M3: Action 迁移完成** | 2025-11-24 | ✅ 完成 | cice-actions 完成 |
 | **M4: 外部模块迁移完成** | TBD | ⏳ 待开始 | Phase 2 完成 |
 | **M5: 功能增强完成** | TBD | 🔮 计划中 | Phase 3 完成 |
 

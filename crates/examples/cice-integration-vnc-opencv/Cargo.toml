@@ -1,0 +1,16 @@
+[package]
+name = "cice-integration-vnc-opencv"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cice-core = { path = "../../cice-core" }
+cice-runtime-vnc = { path = "../../cice-runtimes/cice-runtime-vnc" }
+cice-action-opencv = { path = "../../cice-actions/cice-action-opencv" }
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+image = "0.25"
+
+[[example]]
+name = "vnc_template_match"
+path = "examples/vnc_template_match.rs"

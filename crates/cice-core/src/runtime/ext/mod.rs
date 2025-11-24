@@ -1,5 +1,8 @@
+use async_trait::async_trait;
+
 use crate::runtime::Runtime;
 
-pub trait ScreenCaptureExt: Runtime {
-    fn capture_screen(&self) -> Option<&[u8]>;
+#[async_trait]
+pub trait ScreenshotExt: Runtime {
+    async fn screenshot(&self) -> Option<Vec<u8>>;
 }
