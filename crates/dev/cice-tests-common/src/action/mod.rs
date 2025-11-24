@@ -6,7 +6,7 @@ use std::sync::Arc;
 /// 测试用的简单 Runtime 实现
 #[derive(Clone)]
 pub struct TestRuntime {
-    inner: Arc<TestRuntimeInner>,
+    _inner: Arc<TestRuntimeInner>,
 }
 
 struct TestRuntimeInner {
@@ -16,7 +16,7 @@ struct TestRuntimeInner {
 impl TestRuntime {
     pub fn new() -> Self {
         Self {
-            inner: Arc::new(TestRuntimeInner {}),
+            _inner: Arc::new(TestRuntimeInner {}),
         }
     }
 }

@@ -23,9 +23,9 @@ use tokio::sync::RwLock;
 #[derive(Clone)]
 pub struct VncRuntime {
     /// VNC 服务器地址
-    address: String,
+    _address: String,
     /// VNC 连接密码
-    password: Option<String>,
+    _password: Option<String>,
     /// 连接状态
     connected: Arc<RwLock<bool>>,
     /// 屏幕尺寸 (width, height)
@@ -40,8 +40,8 @@ impl VncRuntime {
     /// - `password`: VNC 连接密码（可选）
     pub fn new(address: impl Into<String>, password: Option<String>) -> Self {
         Self {
-            address: address.into(),
-            password,
+            _address: address.into(),
+            _password: password,
             connected: Arc::new(RwLock::new(false)),
             screen_size: Arc::new(RwLock::new((1920, 1080))), // 默认分辨率
         }
@@ -97,7 +97,7 @@ impl VncRuntime {
     /// - `x`: X 坐标
     /// - `y`: Y 坐标
     /// - `button`: 鼠标按钮（1=左键, 2=中键, 3=右键）
-    pub async fn click(&self, x: u32, y: u32, button: u8) -> Result<(), VncError> {
+    pub async fn click(&self, _x: u32, _y: u32, _button: u8) -> Result<(), VncError> {
         if !self.is_connected().await {
             return Err(VncError::NotConnected);
         }
@@ -111,7 +111,7 @@ impl VncRuntime {
     /// # 参数
     /// - `x`: X 坐标
     /// - `y`: Y 坐标
-    pub async fn move_mouse(&self, x: u32, y: u32) -> Result<(), VncError> {
+    pub async fn move_mouse(&self, _x: u32, _y: u32) -> Result<(), VncError> {
         if !self.is_connected().await {
             return Err(VncError::NotConnected);
         }
@@ -124,7 +124,7 @@ impl VncRuntime {
     ///
     /// # 参数
     /// - `text`: 要输入的文本
-    pub async fn type_text(&self, text: &str) -> Result<(), VncError> {
+    pub async fn type_text(&self, _text: &str) -> Result<(), VncError> {
         if !self.is_connected().await {
             return Err(VncError::NotConnected);
         }
@@ -137,7 +137,7 @@ impl VncRuntime {
     ///
     /// # 参数
     /// - `key`: 按键代码
-    pub async fn press_key(&self, key: u32) -> Result<(), VncError> {
+    pub async fn press_key(&self, _key: u32) -> Result<(), VncError> {
         if !self.is_connected().await {
             return Err(VncError::NotConnected);
         }

@@ -67,7 +67,7 @@ pub struct Size {
 /// );
 /// ```
 pub struct TemplateMatchAction {
-    name: String,
+    _name: String,
     config: TemplateMatchConfig,
 }
 
@@ -79,7 +79,7 @@ impl TemplateMatchAction {
     /// - `config`: 模板匹配配置
     pub fn new(name: impl Into<String>, config: TemplateMatchConfig) -> Self {
         Self {
-            name: name.into(),
+            _name: name.into(),
             config,
         }
     }
@@ -216,7 +216,7 @@ mod tests {
                 roi: None,
             },
         );
-        assert_eq!(action.name, "test");
+        assert_eq!(action._name, "test");
         assert_eq!(action.config.template_path, "template.png");
         assert_eq!(action.config.threshold, 0.9);
     }
