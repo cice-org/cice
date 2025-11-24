@@ -10,7 +10,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [target.'cfg(not(windows))'.dependencies]
-opencv = { version = "0.94.2", features = [
+opencv = { version = "0.97.2", features = [
     "clang-runtime",
 ] } #https://github.com/twistedfall/opencv-rust/commit/bf994662871dc2570b5a84fe914c3dcb2909e242
 
