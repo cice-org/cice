@@ -1,44 +1,31 @@
 use cice_core::context::ContextBuilder;
 use cice_core::message::{task::TaskMessage, Message};
-
-use cice_tests_common::controller::{
-    ControllerWithInputAndOutputAction, DummyController, SimpleImageController,
-};
-use cice_tests_common::recognizer::SimpleImageInputRecognizer;
-use cice_tests_common::recognizer::{
-    AcceptAllRecognizer, DenyAllRecognizer, SimpleRecognizerWithAction, SimpleRecognizerWithConfig,
-};
-use cice_tests_common::{
-    controller::SimpleControllerWithConfig,
-    recognizer::AssertImageRecognizer,
-    task::{Tasks, TestTaskData},
-    Config,
-};
+use cice_core::task::TaskConfig;
+use cice_tests_common::action::{DenyAction, SimpleAction, TestRuntime};
+use cice_tests_common::task::Tasks;
 
 #[tokio::test]
 async fn config() {
-    let mut builder = ContextBuilder::new();
-    let config_str = include_str!("task_config/json/base_config.json");
-    let base_config: Config = serde_json::from_str(config_str).unwrap();
-    builder.add_controller((
-        Box::new(SimpleControllerWithConfig::new(
-            base_config.controller.clone().unwrap().try_into().unwrap(),
-        )),
-        serde_json::to_value(base_config.controller.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((
-        Box::new(SimpleRecognizerWithConfig::new(
-            base_config.recognizer.clone().unwrap().try_into().unwrap(),
-        )),
-        serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
+    // 创建 Runtime
+    let runtime = TestRuntime::new();
+
+    // 创建 Action
+    let simple_action = SimpleAction::new("simple_action");
+
+    // 创建 Context Builder
+    let mut builder = ContextBuilder::new(runtime);
+
+    // 从 JSON 加载任务配置
     let task_config = include_str!("task_config/json/base_task.json");
-    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
-    let task_datas: Vec<TestTaskData> = task_datas.into();
-    for task in task_datas {
-        builder.add_task(task);
+    let tasks: Tasks = serde_json::from_str(task_config).unwrap();
+    let task_configs: Vec<TaskConfig> = tasks.into();
+
+    // 添加任务
+    for config in task_configs {
+        builder.add_task(config, &simple_action);
     }
+
+    // 构建并运行
     let ret = builder.build().run("test".to_string()).await;
     println!("{ret:?}");
     assert!(ret.is_ok())
@@ -46,28 +33,28 @@ async fn config() {
 
 #[tokio::test]
 async fn task_sequence() {
-    let mut builder = ContextBuilder::new();
-    let config_str = include_str!("task_config/json/base_config.json");
-    let base_config: Config = serde_json::from_str(config_str).unwrap();
-    builder.add_controller((
-        Box::new(SimpleControllerWithConfig::new(
-            base_config.controller.clone().unwrap().try_into().unwrap(),
-        )),
-        serde_json::to_value(base_config.controller.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((
-        Box::new(AssertImageRecognizer {}),
-        serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
-    builder.add_recognizer((Box::new(DenyAllRecognizer {}), serde_json::json!({})));
-    // Load task sequence config
-    let task_config = include_str!("task_config/json/task_sequence.json");
-    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
-    let task_datas: Vec<TestTaskData> = task_datas.into();
+    // 创建 Runtime
+    let runtime = TestRuntime::new();
 
-    for task in task_datas {
-        builder.add_task(task);
+    // 创建 Actions
+    let accept_action = SimpleAction::new("accept_action");
+    let deny_action = DenyAction::new("deny_action");
+
+    // 创建 Context Builder
+    let mut builder = ContextBuilder::new(runtime);
+
+    // 从 JSON 加载任务配置
+    let task_config = include_str!("task_config/json/task_sequence.json");
+    let tasks: Tasks = serde_json::from_str(task_config).unwrap();
+    let task_configs: Vec<TaskConfig> = tasks.into();
+
+    // 添加任务 - 根据 action_name 分配对应的 action
+    for config in task_configs {
+        match config.action_name.as_str() {
+            "accept_action" => builder.add_task(config, &accept_action),
+            "deny_action" => builder.add_task(config, &deny_action),
+            _ => panic!("Unknown action name: {}", config.action_name),
+        };
     }
 
     let context = builder.build();
@@ -92,6 +79,7 @@ async fn task_sequence() {
     // Get collected messages
     let messages = message_task.await.unwrap();
     println!("message :{messages:?}");
+
     // Verify task execution order
     let expected_order = vec![
         "Task1".to_string(),
@@ -112,24 +100,30 @@ async fn task_sequence() {
 
 #[tokio::test]
 async fn simple_image() {
-    let mut builder = ContextBuilder::new();
-    let config_str = include_str!("task_config/json/base_config.json");
-    let base_config: Config = serde_json::from_str(config_str).unwrap();
-    builder.add_controller((
-        Box::new(SimpleImageController::new()),
-        serde_json::to_value(base_config.controller.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((
-        Box::new(SimpleImageInputRecognizer {}),
-        serde_json::to_value(base_config.recognizer.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
+    // 创建 Runtime
+    let runtime = TestRuntime::new();
+
+    // 创建 Actions
+    let simple_action = SimpleAction::new("simple_action");
+    let simple_image_action = SimpleAction::new("simple_image_action");
+
+    // 创建 Context Builder
+    let mut builder = ContextBuilder::new(runtime);
+
+    // 从 JSON 加载任务配置
     let task_config = include_str!("task_config/json/simple_image.json");
-    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
-    let task_datas: Vec<TestTaskData> = task_datas.into();
-    for task in task_datas {
-        builder.add_task(task);
+    let tasks: Tasks = serde_json::from_str(task_config).unwrap();
+    let task_configs: Vec<TaskConfig> = tasks.into();
+
+    // 添加任务
+    for config in task_configs {
+        match config.action_name.as_str() {
+            "simple_action" => builder.add_task(config, &simple_action),
+            "simple_image_action" => builder.add_task(config, &simple_image_action),
+            _ => panic!("Unknown action name: {}", config.action_name),
+        };
     }
+
     let ret = builder.build().run("entry".to_string()).await;
     println!("{ret:?}");
     assert!(ret.is_ok())
@@ -137,20 +131,30 @@ async fn simple_image() {
 
 #[tokio::test]
 async fn controller_input_and_output_action() {
-    let mut builder = ContextBuilder::new();
-    let config_str = include_str!("task_config/json/base_config.json");
-    let base_config: Config = serde_json::from_str(config_str).unwrap();
-    builder.add_controller((
-        Box::new(ControllerWithInputAndOutputAction::new()),
-        serde_json::to_value(base_config.controller.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
+    // 创建 Runtime
+    let runtime = TestRuntime::new();
+
+    // 创建 Actions
+    let simple_action = SimpleAction::new("simple_action");
+    let input_output_action = SimpleAction::new("input_output_action");
+
+    // 创建 Context Builder
+    let mut builder = ContextBuilder::new(runtime);
+
+    // 从 JSON 加载任务配置
     let task_config = include_str!("task_config/json/controller_input_and_output_action.json");
-    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
-    let task_datas: Vec<TestTaskData> = task_datas.into();
-    for task in task_datas {
-        builder.add_task(task);
+    let tasks: Tasks = serde_json::from_str(task_config).unwrap();
+    let task_configs: Vec<TaskConfig> = tasks.into();
+
+    // 添加任务
+    for config in task_configs {
+        match config.action_name.as_str() {
+            "simple_action" => builder.add_task(config, &simple_action),
+            "input_output_action" => builder.add_task(config, &input_output_action),
+            _ => panic!("Unknown action name: {}", config.action_name),
+        };
     }
+
     let ret = builder.build().run("entry".to_string()).await;
     println!("{ret:?}");
     assert!(ret.is_ok())
@@ -158,24 +162,30 @@ async fn controller_input_and_output_action() {
 
 #[tokio::test]
 async fn recognizer_simple_with_action() {
-    let mut builder = ContextBuilder::new();
-    let config_str = include_str!("task_config/json/base_config.json");
-    let base_config: Config = serde_json::from_str(config_str).unwrap();
-    builder.add_controller((
-        Box::new(DummyController::new()),
-        serde_json::to_value(base_config.controller.unwrap()).unwrap(),
-    ));
-    builder.add_recognizer((Box::new(AcceptAllRecognizer {}), serde_json::json!({})));
-    builder.add_recognizer((
-        Box::new(SimpleRecognizerWithAction {}),
-        serde_json::json!({}),
-    ));
+    // 创建 Runtime
+    let runtime = TestRuntime::new();
+
+    // 创建 Actions
+    let simple_action = SimpleAction::new("simple_action");
+    let action_with_area = SimpleAction::new("action_with_area");
+
+    // 创建 Context Builder
+    let mut builder = ContextBuilder::new(runtime);
+
+    // 从 JSON 加载任务配置
     let task_config = include_str!("task_config/json/recognizer_simple_with_action.json");
-    let task_datas: Tasks = serde_json::from_str(task_config).unwrap();
-    let task_datas: Vec<TestTaskData> = task_datas.into();
-    for task in task_datas {
-        builder.add_task(task);
+    let tasks: Tasks = serde_json::from_str(task_config).unwrap();
+    let task_configs: Vec<TaskConfig> = tasks.into();
+
+    // 添加任务
+    for config in task_configs {
+        match config.action_name.as_str() {
+            "simple_action" => builder.add_task(config, &simple_action),
+            "action_with_area" => builder.add_task(config, &action_with_area),
+            _ => panic!("Unknown action name: {}", config.action_name),
+        };
     }
+
     let ret = builder.build().run("entry".to_string()).await;
     println!("{ret:?}");
     assert!(ret.is_ok())

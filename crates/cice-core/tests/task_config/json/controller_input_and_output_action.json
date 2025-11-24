@@ -1,20 +1,16 @@
 {
   "entry": {
+    "action_name": "simple_action",
     "next_task": ["Next"],
     "interrupt_task": [],
-    "controller_id": "controller_simple_with_config",
-    "recognizer_id": "recognizer_AcceptAll"
+    "timeout_secs": 30,
+    "max_retry": 3
   },
   "Next": {
+    "action_name": "input_output_action",
     "next_task": [],
     "interrupt_task": [],
-    "controller_id": "controller_with_input_and_output_action",
-    "controller_input":{
-        "name":"click"
-    },
-    "controller_output":{
-        "name":"screen_capture"
-    },
-    "recognizer_id": "recognizer_AcceptAll"
+    "timeout_secs": 30,
+    "max_retry": 3
   }
 }
