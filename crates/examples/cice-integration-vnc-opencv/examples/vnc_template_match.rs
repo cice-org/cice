@@ -1,10 +1,7 @@
-use async_trait::async_trait;
-use cice_action_opencv::TemplateMatchAction;
+use cice_action_opencv::{TemplateMatchAction, TemplateMatchConfig};
 use cice_core::context::ContextBuilder;
-use cice_core::runtime::ext::ScreenshotExt;
 use cice_core::task::TaskConfig;
 use cice_runtime_vnc::VncRuntime;
-use image::DynamicImage;
 use std::time::Duration;
 
 #[tokio::main]
@@ -24,16 +21,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("3. 创建模板匹配 Action...");
     let find_button_action = TemplateMatchAction::new(
         "find_login_button",
-        "templates/login_button.png",
-        0.8,  // 匹配阈值
-        None, // 全屏搜索
+        TemplateMatchConfig {
+            template_path: "templates/login_button.png".to_string(),
+            threshold: 0.8, // 匹配阈值
+            roi: None,      // 全屏搜索
+        },
     );
 
     let find_icon_action = TemplateMatchAction::new(
         "find_app_icon",
-        "templates/app_icon.png",
-        0.9,
-        Some([0, 0, 800, 600]), // 只在左上角区域搜索
+        TemplateMatchConfig {
+            template_path: "templates/app_icon.png".to_string(),
+            threshold: 0.9,              // 匹配阈值
+            roi: Some([0, 0, 800, 600]), // 只在左上角区域搜索
+        },
     );
 
     // 4. 构建 Context

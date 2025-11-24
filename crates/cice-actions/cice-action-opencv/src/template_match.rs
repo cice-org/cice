@@ -76,27 +76,8 @@ impl TemplateMatchAction {
     ///
     /// # 参数
     /// - `name`: Action 名称
-    /// - `template_path`: 模板图像路径
-    /// - `threshold`: 匹配置信度阈值（0.0 - 1.0）
-    /// - `roi`: 感兴趣区域 [x, y, width, height]
-    pub fn new(
-        name: impl Into<String>,
-        template_path: impl Into<String>,
-        threshold: f64,
-        roi: Option<[u64; 4]>,
-    ) -> Self {
-        Self {
-            name: name.into(),
-            config: TemplateMatchConfig {
-                template_path: template_path.into(),
-                threshold,
-                roi,
-            },
-        }
-    }
-
-    /// 从配置创建 Action
-    pub fn from_config(name: impl Into<String>, config: TemplateMatchConfig) -> Self {
+    /// - `config`: 模板匹配配置
+    pub fn new(name: impl Into<String>, config: TemplateMatchConfig) -> Self {
         Self {
             name: name.into(),
             config,
@@ -172,7 +153,7 @@ where
             .screenshot()
             .await
             .ok_or(RecognizeError::RecognizeFailed {
-                reason: format!("Failed to get screenshot"),
+                reason: "Failed to get screenshot".to_string(),
             })?;
         let src_mat = imgcodecs::imdecode(&screenshot.as_slice(), imgcodecs::IMREAD_COLOR)
             .map_err(|e| RecognizeError::RecognizeFailed {
@@ -227,7 +208,14 @@ mod tests {
 
     #[test]
     fn test_template_match_action_creation() {
-        let action = TemplateMatchAction::new("test", "template.png", 0.9, None);
+        let action = TemplateMatchAction::new(
+            "test",
+            TemplateMatchConfig {
+                template_path: "template.png".to_string(),
+                threshold: 0.9,
+                roi: None,
+            },
+        );
         assert_eq!(action.name, "test");
         assert_eq!(action.config.template_path, "template.png");
         assert_eq!(action.config.threshold, 0.9);
