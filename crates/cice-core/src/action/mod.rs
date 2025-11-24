@@ -9,6 +9,10 @@ pub type ActionId = String;
 /// 1. recognize: check whether the precondition of this action is satisfied. Such as whether a specific UI element appears on the screen.
 /// 2. exec: execute the action.
 ///
+/// An action object has two concepts:
+/// 1. implementation: the actual implementation of the action.
+/// 2. parameters: the parameters of the action. For example, a ClickAction may have parameters like the coordinates to click.
+///
 #[async_trait]
 pub trait Action<RUNTIME: Runtime>: Send + Sync {
     async fn recognize(&self, runtime: &RUNTIME) -> Result<(), RecognizeError>;
