@@ -1,8 +1,12 @@
 # Runtime-Action 架构快速参考
 
-## 🚀 快速开始
+> 快速查找常用代码片段、API 和迁移对照表
 
-### 1. 创建测试
+---
+
+## 🚀 5 分钟快速开始
+
+### 1. 创建简单测试
 
 ```rust
 use cice_core::context::ContextBuilder;
@@ -12,10 +16,14 @@ use std::time::Duration;
 
 #[tokio::test]
 async fn my_test() {
+    // 1. 创建 Runtime
     let runtime = TestRuntime::new();
-    let action = SimpleAction::new("my_action");
-    let mut builder = ContextBuilder::new(runtime);
 
+    // 2. 创建 Action
+    let action = SimpleAction::new("my_action");
+
+    // 3. 构建 Context
+    let mut builder = ContextBuilder::new(runtime);
     builder.add_task(
         TaskConfig {
             task_name: "task1".to_string(),
@@ -28,34 +36,38 @@ async fn my_test() {
         &action,
     );
 
+    // 4. 运行
     builder.build().run("task1".to_string()).await.unwrap();
 }
 ```
 
-### 2. 自定义 Action
+### 2. 实现自定义 Action
 
 ```rust
 use async_trait::async_trait;
 use cice_core::action::{Action, ExecError, RecognizeError};
-use cice_tests_common::action::TestRuntime;
 
-pub struct MyAction {}
+pub struct MyAction {
+    name: String,
+}
 
 #[async_trait]
-impl Action<TestRuntime> for MyAction {
-    async fn recognize(&self, _runtime: &TestRuntime) -> Result<(), RecognizeError> {
+impl<R: Runtime> Action<R> for MyAction {
+    async fn recognize(&self, runtime: &R) -> Result<(), RecognizeError> {
         // 检查前置条件
+        // 如果条件不满足，返回 RecognizeError::UnRecognized
         Ok(())
     }
 
-    async fn exec(&self, _runtime: &TestRuntime) -> Result<(), ExecError> {
-        // 执行动作
+    async fn exec(&self, runtime: &R) -> Result<(), ExecError> {
+        // 执行具体动作
+        println!("Executing action: {}", self.name);
         Ok(())
     }
 }
 ```
 
-### 3. JSON 配置
+### 3. JSON 配置格式
 
 ```json
 {
@@ -69,133 +81,424 @@ impl Action<TestRuntime> for MyAction {
 }
 ```
 
-## 📋 核心概念
+---
 
-| 概念 | 说明 | 示例 |
-|------|------|------|
-| **Runtime** | 提供运行时资源和基础设施 | `TestRuntime::new()` |
-| **Action** | 定义行为（识别 + 执行） | `SimpleAction::new("name")` |
-| **Task** | 关联 Action 和配置 | `TaskConfig { ... }` |
+## 📋 核心概念速查
+
+| 概念 | 职责 | 代码示例 |
+|------|------|----------|
+| **Runtime** | 提供系统资源和基础设施 | `let runtime = TestRuntime::new();` |
+| **Action** | 定义行为（识别 + 执行） | `let action = SimpleAction::new("name");` |
+| **Task** | 关联 Action 和执行配置 | `TaskConfig { task_name, action_name, ... }` |
 | **Context** | 管理 Runtime 和 Tasks | `ContextBuilder::new(runtime)` |
-
-## 🔄 迁移对照
-
-### 旧架构 → 新架构
-
-| 旧概念 | 新概念 | 说明 |
-|--------|--------|------|
-| Controller | Action | 统一为 Action |
-| Recognizer | Action | 统一为 Action |
-| controller_id | action_name | 字段重命名 |
-| recognizer_id | ~~删除~~ | 不再需要 |
-| exec_output() | exec() | 方法简化 |
-| exec_input() | ~~删除~~ | 合并到 exec() |
-| exec() (Recognizer) | recognize() | 方法重命名 |
-
-### 代码迁移
-
-#### 旧代码
-```rust
-let mut builder = ContextBuilder::new();
-builder.add_controller((Box::new(MyController::new()), config));
-builder.add_recognizer((Box::new(MyRecognizer::new()), config));
-builder.add_task(task_data);
-```
-
-#### 新代码
-```rust
-let runtime = TestRuntime::new();
-let action = MyAction::new();
-let mut builder = ContextBuilder::new(runtime);
-builder.add_task(task_config, &action);
-```
-
-## 🎯 常用 Actions
-
-### SimpleAction
-总是成功的 Action
-```rust
-let action = SimpleAction::new("name");
-```
-
-### DenyAction
-总是识别失败的 Action
-```rust
-let action = DenyAction::new("name");
-```
-
-### ConfigurableAction
-可配置成功/失败的 Action
-```rust
-let action = ConfigurableAction::new("name", true); // 成功
-let action = ConfigurableAction::new("name", false); // 失败
-```
-
-## 📝 JSON 字段说明
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `action_name` | String | ✅ | Action 标识符 |
-| `next_task` | Array | ✅ | 下一个任务列表 |
-| `interrupt_task` | Array | ✅ | 中断任务列表 |
-| `timeout_secs` | Number | ❌ | 超时时间（默认 30） |
-| `max_retry` | Number | ❌ | 最大重试次数（默认 3） |
-
-## 🛠️ 常用命令
-
-```bash
-# 编译检查
-cargo check -p cice-core
-cargo check -p cice-tests-common
-
-# 运行测试
-cargo test -p cice-core --test base_task
-cargo test -p cice-tests-common
-
-# 查看输出
-cargo test -- --nocapture
-
-# 运行单个测试
-cargo test -p cice-core --test base_task config
-```
-
-## 📚 文档链接
-
-- [详细重构文档](runtime-refactor.md)
-- [测试重构说明](../../crates/cice-core/tests/REFACTOR.md)
-- [测试框架指南](../../crates/dev/cice-tests-common/README.md)
-- [完整总结](SUMMARY.md)
-
-## ⚠️ 注意事项
-
-1. **Action 生命周期**：Action 必须在 Context 生命周期内有效
-2. **引用传递**：使用 `&action` 而非 `action`
-3. **Runtime 类型**：Action 和 Runtime 类型必须匹配
-4. **错误处理**：区分 `UnRecognized`（非错误）和 `RecognizeFailed`（错误）
-
-## 🐛 常见问题
-
-### Q: 编译错误：lifetime mismatch
-**A**: 确保 Action 的生命周期足够长，通常在函数开始时创建
-
-### Q: 运行时找不到 Action
-**A**: 检查 `action_name` 是否与代码中的匹配逻辑一致
-
-### Q: 测试一直超时
-**A**: 检查 Action 的 `recognize()` 是否正确返回，避免死循环
-
-### Q: JSON 解析失败
-**A**: 确保 JSON 格式正确，包含所有必填字段
-
-## 💡 最佳实践
-
-1. **命名规范**：Action 名称使用 `snake_case`
-2. **错误处理**：明确区分识别失败和执行失败
-3. **日志记录**：在 Action 中添加适当的日志
-4. **测试覆盖**：为每个 Action 编写单元测试
-5. **文档注释**：为自定义 Action 添加文档注释
 
 ---
 
-**版本**：v1.0
-**更新日期**：2025-11-24
+## 🔄 迁移对照表
+
+### 概念映射
+
+| 旧架构 | 新架构 | 变化说明 |
+|--------|--------|----------|
+| **Controller** | **Runtime** | 提供资源的部分 → Runtime |
+| **Controller** | **Action** | 执行动作的部分 → Action |
+| **Recognizer** | **Action** | 统一为 Action |
+| `controller_id` | `action_name` | 字段重命名 |
+| `recognizer_id` | ~~删除~~ | 不再需要 |
+| `Controller.exec_output()` | `Action.exec()` | 方法简化 |
+| `Controller.exec_input()` | ~~删除~~ | 合并到 exec() |
+| `Recognizer.exec()` | `Action.recognize()` | 方法重命名 |
+
+### 代码迁移示例
+
+#### 旧架构代码
+
+```rust
+// 1. 创建 Context
+let mut builder = ContextBuilder::new();
+
+// 2. 注册 Controller 和 Recognizer
+builder.add_controller((Box::new(MyController::new()), config));
+builder.add_recognizer((Box::new(MyRecognizer::new()), config));
+
+// 3. 添加 Task
+builder.add_task(task_data);
+
+// 4. 构建并运行
+let context = builder.build();
+context.run("entry".to_string()).await;
+```
+
+#### 新架构代码
+
+```rust
+// 1. 创建 Runtime 和 Action
+let runtime = MyRuntime::new();
+let action = MyAction::new();
+
+// 2. 创建 Context
+let mut builder = ContextBuilder::new(runtime);
+
+// 3. 添加 Task（直接关联 Action）
+builder.add_task(task_config, &action);
+
+// 4. 构建并运行
+let context = builder.build();
+context.run("entry".to_string()).await;
+```
+
+### JSON 配置迁移
+
+#### 旧格式
+
+```json
+{
+  "task_name": {
+    "next_task": ["next"],
+    "interrupt_task": [],
+    "controller_id": "my_controller",
+    "recognizer_id": "my_recognizer",
+    "controller_input": { "key": "value" },
+    "controller_output": { "key": "value" },
+    "reco": { "key": "value" }
+  }
+}
+```
+
+#### 新格式
+
+```json
+{
+  "task_name": {
+    "action_name": "my_action",
+    "next_task": ["next"],
+    "interrupt_task": [],
+    "timeout_secs": 30,
+    "max_retry": 3
+  }
+}
+```
+
+**变化说明**：
+- ❌ 移除：`controller_id`, `recognizer_id`
+- ❌ 移除：`controller_input`, `controller_output`, `reco`（配置应在 Action 内部管理）
+- ✅ 新增：`action_name`（标识 Action）
+- ✅ 新增：`timeout_secs`（超时时间，可选）
+- ✅ 新增：`max_retry`（最大重试次数，可选）
+
+---
+
+## 🎯 测试用 Actions
+
+### SimpleAction - 总是成功
+
+```rust
+use cice_tests_common::action::SimpleAction;
+
+let action = SimpleAction::new("my_action");
+// recognize() 和 exec() 都会成功
+```
+
+### DenyAction - 总是识别失败
+
+```rust
+use cice_tests_common::action::DenyAction;
+
+let action = DenyAction::new("my_action");
+// recognize() 会返回 RecognizeError::UnRecognized
+```
+
+### ConfigurableAction - 可配置成功/失败
+
+```rust
+use cice_tests_common::action::ConfigurableAction;
+
+// 成功的 Action
+let action = ConfigurableAction::new("my_action", true);
+
+// 失败的 Action
+let action = ConfigurableAction::new("my_action", false);
+```
+
+---
+
+## 📝 TaskConfig 字段说明
+
+| 字段 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `task_name` | String | ✅ | - | 任务唯一标识符 |
+| `action_name` | String | ✅ | - | Action 标识符 |
+| `next_task` | Vec\<String\> | ✅ | - | 成功后的下一个任务列表 |
+| `interrupt_task` | Vec\<String\> | ✅ | - | 中断时的任务列表 |
+| `timeout` | Duration | ❌ | 30s | 任务超时时间 |
+| `max_retry` | u32 | ❌ | 3 | 最大重试次数 |
+
+**JSON 格式**：
+
+```json
+{
+  "task_name": {
+    "action_name": "my_action",
+    "next_task": ["task2", "task3"],
+    "interrupt_task": ["error_handler"],
+    "timeout_secs": 30,
+    "max_retry": 3
+  }
+}
+```
+
+---
+
+## 🛠️ 常用命令
+
+### 编译检查
+
+```bash
+# 检查核心模块
+cargo check -p cice-core
+
+# 检查测试模块
+cargo check -p cice-tests-common
+
+# 检查所有模块
+cargo check --workspace
+```
+
+### 运行测试
+
+```bash
+# 运行所有核心测试
+cargo test -p cice-core --test base_task
+
+# 运行单个测试
+cargo test -p cice-core --test base_task test_name
+
+# 运行测试并显示输出
+cargo test -p cice-core --test base_task -- --nocapture
+
+# 运行测试框架测试
+cargo test -p cice-tests-common
+```
+
+### 代码格式化和检查
+
+```bash
+# 格式化代码
+cargo fmt
+
+# 运行 clippy
+cargo clippy --workspace
+
+# 构建文档
+cargo doc --open
+```
+
+---
+
+## 📚 相关文档
+
+| 文档 | 说明 |
+|------|------|
+| [README.md](README.md) | 重构概述（What, Why, How） |
+| [SUMMARY.md](SUMMARY.md) | 完整修改总结和统计 |
+| [TODO.md](TODO.md) | 重构任务清单 |
+| [runtime-refactor.md](runtime-refactor.md) | 详细设计文档 |
+| [测试框架指南](../../crates/dev/cice-tests-common/README.md) | 测试框架使用说明 |
+| [测试重构说明](../../crates/cice-core/tests/REFACTOR.md) | 测试用例修改详情 |
+
+---
+
+## ⚠️ 重要注意事项
+
+### 1. Action 生命周期
+Action 必须在 Context 生命周期内有效。通常在函数开始时创建 Action。
+
+```rust
+// ✅ 正确：Action 在整个函数作用域内有效
+let action = MyAction::new();
+let mut builder = ContextBuilder::new(runtime);
+builder.add_task(config, &action);
+let context = builder.build();
+context.run("task1".to_string()).await;
+
+// ❌ 错误：Action 在 add_task 后被销毁
+builder.add_task(config, &MyAction::new());
+```
+
+### 2. 引用传递
+使用 `&action` 而非 `action`，避免所有权转移。
+
+```rust
+// ✅ 正确
+builder.add_task(config, &action);
+
+// ❌ 错误
+builder.add_task(config, action);
+```
+
+### 3. Runtime 类型匹配
+Action 和 Runtime 的泛型类型必须匹配。
+
+```rust
+// ✅ 正确
+impl Action<TestRuntime> for MyAction { /* ... */ }
+let runtime = TestRuntime::new();
+
+// ❌ 错误：类型不匹配
+impl Action<VncRuntime> for MyAction { /* ... */ }
+let runtime = TestRuntime::new();
+```
+
+### 4. 错误处理
+区分 `UnRecognized`（非错误，继续重试）和 `RecognizeFailed`（错误，停止执行）。
+
+```rust
+async fn recognize(&self, runtime: &R) -> Result<(), RecognizeError> {
+    if !condition_met() {
+        // 条件未满足，继续重试
+        return Err(RecognizeError::UnRecognized);
+    }
+
+    if error_occurred() {
+        // 发生错误，停止执行
+        return Err(RecognizeError::RecognizeFailed {
+            reason: "Error occurred".to_string()
+        });
+    }
+
+    Ok(())
+}
+```
+
+---
+
+## 🐛 常见问题
+
+### Q1: 编译错误：lifetime mismatch
+
+```
+error[E0597]: `action` does not live long enough
+```
+
+**原因**：Action 的生命周期不够长。
+
+**解决方案**：在函数开始时创建 Action，确保其在整个 Context 生命周期内有效。
+
+```rust
+// ✅ 正确
+let action = MyAction::new();
+let mut builder = ContextBuilder::new(runtime);
+builder.add_task(config, &action);
+```
+
+### Q2: 运行时找不到 Action
+
+**原因**：`action_name` 与代码中的匹配逻辑不一致。
+
+**解决方案**：确保 JSON 配置中的 `action_name` 与代码中的 Action 名称匹配。
+
+```json
+{
+  "task1": {
+    "action_name": "my_action"  // 确保这个名称与代码中一致
+  }
+}
+```
+
+### Q3: 测试一直超时
+
+**原因**：Action 的 `recognize()` 一直返回 `UnRecognized`，导致无限重试。
+
+**解决方案**：检查 `recognize()` 的逻辑，确保在合理的时间内返回 `Ok(())`。
+
+```rust
+async fn recognize(&self, runtime: &R) -> Result<(), RecognizeError> {
+    // 确保这里的条件能够被满足
+    if self.check_condition(runtime) {
+        Ok(())
+    } else {
+        Err(RecognizeError::UnRecognized)
+    }
+}
+```
+
+### Q4: JSON 解析失败
+
+**原因**：JSON 格式不正确或缺少必填字段。
+
+**解决方案**：确保 JSON 格式正确，包含所有必填字段。
+
+```json
+{
+  "task_name": {
+    "action_name": "my_action",     // 必填
+    "next_task": [],                // 必填
+    "interrupt_task": [],           // 必填
+    "timeout_secs": 30,             // 可选
+    "max_retry": 3                  // 可选
+  }
+}
+```
+
+---
+
+## 💡 最佳实践
+
+### 1. 命名规范
+- **Action 名称**：使用 `snake_case`，如 `click_button`, `find_image`
+- **Task 名称**：使用描述性名称，如 `login_task`, `verify_result`
+
+### 2. 错误处理
+- **识别失败**：使用 `RecognizeError::UnRecognized`（会重试）
+- **识别错误**：使用 `RecognizeError::RecognizeFailed`（停止执行）
+- **执行错误**：使用 `ExecError::ExecFailed`（停止执行）
+
+### 3. 日志记录
+在 Action 中添加适当的日志，便于调试。
+
+```rust
+async fn exec(&self, runtime: &R) -> Result<(), ExecError> {
+    log::info!("Executing action: {}", self.name);
+    // 执行逻辑
+    log::info!("Action completed successfully");
+    Ok(())
+}
+```
+
+### 4. 测试覆盖
+为每个 Action 编写单元测试。
+
+```rust
+#[tokio::test]
+async fn test_my_action() {
+    let runtime = TestRuntime::new();
+    let action = MyAction::new();
+
+    // 测试 recognize
+    assert!(action.recognize(&runtime).await.is_ok());
+
+    // 测试 exec
+    assert!(action.exec(&runtime).await.is_ok());
+}
+```
+
+### 5. 文档注释
+为自定义 Action 添加文档注释。
+
+```rust
+/// 点击按钮的 Action
+///
+/// # 示例
+///
+/// ```
+/// let action = ClickButtonAction::new("submit");
+/// ```
+pub struct ClickButtonAction {
+    button_name: String,
+}
+```
+
+---
+
+**版本**: v1.0
+**最后更新**: 2025-11-24
