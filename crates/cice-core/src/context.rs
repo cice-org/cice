@@ -1,74 +1,9 @@
-use crate::controller::{Controller, ControllerError, ControllerId};
+use crate::action::Action;
 use crate::message::Message;
-use crate::recognizer::{Recognizer, RecognizerError, RecognizerId};
-use crate::resource::ResourceData;
-use crate::task::{Task, TaskData, TaskError, TaskId, TaskResult};
-use std::borrow::Borrow;
+use crate::runtime::Runtime;
+use crate::task::{Task, TaskConfig, TaskError, TaskId, TaskResult};
 use std::collections::HashMap;
 use std::sync::Arc;
-
-#[repr(transparent)]
-#[derive(Clone)]
-pub(crate) struct ControllerWrapper(Arc<ControllerWrapperInner>);
-
-struct ControllerWrapperInner {
-    controller: Box<dyn Controller>,
-    config: ResourceData,
-    initialized: bool,
-}
-
-impl ControllerWrapper {
-    fn new(controller: Box<dyn Controller>, config: ResourceData) -> Self {
-        Self(Arc::new(ControllerWrapperInner {
-            controller,
-            config,
-            initialized: false,
-        }))
-    }
-
-    pub(crate) fn get_or_init(&self) -> Result<&dyn Controller, ControllerError> {
-        if self.0.initialized {
-            Ok(self.0.controller.borrow())
-        } else {
-            self.0.controller.as_ref().init(&self.0.config)?;
-            Ok(self.0.controller.borrow())
-        }
-    }
-
-    pub(crate) fn config(&self) -> &ResourceData {
-        &self.0.config
-    }
-}
-struct RecognizerWrapperInner {
-    recognizer: Box<dyn Recognizer>,
-    config: ResourceData,
-    initialized: bool,
-}
-#[derive(Clone)]
-pub(crate) struct RecognizerWrapper(Arc<RecognizerWrapperInner>);
-
-impl RecognizerWrapper {
-    fn new(recognizer: Box<dyn Recognizer>, config: ResourceData) -> Self {
-        Self(Arc::new(RecognizerWrapperInner {
-            recognizer,
-            config,
-            initialized: false,
-        }))
-    }
-
-    pub(crate) fn get_or_init(&self) -> Result<&dyn Recognizer, RecognizerError> {
-        if self.0.initialized {
-            Ok(self.0.recognizer.borrow())
-        } else {
-            self.0.recognizer.as_ref().init(&self.0.config)?;
-            Ok(self.0.recognizer.borrow())
-        }
-    }
-
-    pub(crate) fn config(&self) -> &ResourceData {
-        &self.0.config
-    }
-}
 
 #[derive(Clone)]
 pub struct ContextHandler(Arc<ContextHandlerInner>);
@@ -96,23 +31,22 @@ impl ContextHandler {
     }
 }
 
-pub struct ContextBuilder {
-    tasks: HashMap<TaskId, Task>,
-    controllers: HashMap<ControllerId, ControllerWrapper>,
-    reconizers: HashMap<RecognizerId, RecognizerWrapper>,
+//could have a 'context lifetime specifier which is longer than 'task if needed
+pub struct ContextBuilder<'task, RUNTIME: Runtime> {
+    runtime: RUNTIME,
+    tasks: HashMap<TaskId, Task<'task, RUNTIME>>,
     context_handler: ContextHandler,
     cancel_recv: async_channel::Receiver<()>,
     message_sender: async_channel::Sender<Message>,
 }
 
-impl ContextBuilder {
-    pub fn new() -> Self {
+impl<'task, RUNTIME: Runtime> ContextBuilder<'task, RUNTIME> {
+    pub fn new(runtime: RUNTIME) -> Self {
         let (cancel_sender, cancel_recv) = async_channel::bounded(1); //Cancel signal should be sent only once
         let (message_sender, message_recv) = async_channel::bounded(20);
         Self {
+            runtime,
             tasks: HashMap::new(),
-            controllers: HashMap::new(),
-            reconizers: HashMap::new(),
             context_handler: ContextHandler(Arc::new(ContextHandlerInner {
                 cancel_sender,
                 message_recv,
@@ -121,64 +55,32 @@ impl ContextBuilder {
             message_sender,
         }
     }
-    pub fn add_task<T: TaskData>(&mut self, task_data: T) -> &mut Self {
-        self.tasks
-            .insert(task_data.base_data().task_name, task_data.into());
+    pub fn add_task(
+        &mut self,
+        task_config: TaskConfig,
+        action: &'task impl Action<RUNTIME>,
+    ) -> &mut Self {
+        self.tasks.insert(
+            task_config.task_name.clone(),
+            Task::new(task_config, action),
+        );
         self
     }
 
-    pub fn add_tasks<T: TaskData>(&mut self, tasks: Vec<T>) -> &mut Self {
+    pub fn add_tasks(
+        &mut self,
+        tasks: Vec<(TaskConfig, &'task impl Action<RUNTIME>)>,
+    ) -> &mut Self {
         for task in tasks {
-            self.add_task(task);
+            self.add_task(task.0, task.1);
         }
         self
     }
 
-    /// # Params
-    /// - controller: (controller: Box<dyn Controller>, controller_config: ResourceData) controller and its config resource data
-    pub fn add_controller(&mut self, controller: (Box<dyn Controller>, ResourceData)) -> &mut Self {
-        self.controllers.insert(
-            controller.0.name(),
-            ControllerWrapper::new(controller.0, controller.1),
-        );
-        self
-    }
-
-    /// # Prams
-    /// - controllers: Vec<Box<dyn Controller>> controllers and their config resource data
-    pub fn add_controllers(
-        &mut self,
-        controllers: Vec<(Box<dyn Controller>, ResourceData)>,
-    ) -> &mut Self {
-        for controller in controllers {
-            self.add_controller(controller);
-        }
-        self
-    }
-
-    pub fn add_recognizer(&mut self, recognizer: (Box<dyn Recognizer>, ResourceData)) -> &mut Self {
-        self.reconizers.insert(
-            recognizer.0.name(),
-            RecognizerWrapper::new(recognizer.0, recognizer.1),
-        );
-        self
-    }
-
-    pub fn add_recognizers(
-        &mut self,
-        recognizers: Vec<(Box<dyn Recognizer>, ResourceData)>,
-    ) -> &mut Self {
-        for recognizer in recognizers {
-            self.add_recognizer(recognizer);
-        }
-        self
-    }
-
-    pub fn build(self) -> Context {
+    pub fn build(self) -> Context<'task, RUNTIME> {
         Context(Arc::new(ContextInner {
+            runtime: self.runtime,
             tasks: self.tasks,
-            controllers: self.controllers,
-            reconizers: self.reconizers,
             handler: self.context_handler,
             cancel_recv: self.cancel_recv,
             message_sender: self.message_sender,
@@ -186,24 +88,17 @@ impl ContextBuilder {
     }
 }
 
-impl Default for ContextBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-struct ContextInner {
-    tasks: HashMap<TaskId, Task>,
-    controllers: HashMap<ControllerId, ControllerWrapper>,
-    reconizers: HashMap<RecognizerId, RecognizerWrapper>,
+struct ContextInner<'task, RUNTIME: Runtime> {
+    runtime: RUNTIME, //TODO maybe can extract runtime out of Arc inner thus can use &mut directly
+    tasks: HashMap<TaskId, Task<'task, RUNTIME>>,
     handler: ContextHandler,
     cancel_recv: async_channel::Receiver<()>,
     message_sender: async_channel::Sender<Message>,
 }
 
-pub struct Context(Arc<ContextInner>);
+pub struct Context<'task, RUNTIME: Runtime>(Arc<ContextInner<'task, RUNTIME>>);
 
-impl Context {
+impl<RUNTIME: Runtime> Context<'_, RUNTIME> {
     pub async fn run(&self, entry: TaskId) -> Result<TaskResult, TaskError> {
         if let Some(task) = self.0.tasks.get(&entry) {
             let mut task_res = task.run_with_context(self).await;
@@ -228,20 +123,16 @@ impl Context {
         self.0.handler.clone()
     }
 
-    pub(crate) fn get_controller(&self, id: &ControllerId) -> Option<&ControllerWrapper> {
-        self.0.controllers.get(id)
-    }
-
-    pub(crate) fn get_recognizer(&self, id: &RecognizerId) -> Option<&RecognizerWrapper> {
-        self.0.reconizers.get(id)
-    }
-
-    pub(crate) fn get_task(&self, id: &TaskId) -> Option<&Task> {
+    pub(crate) fn get_task(&self, id: &TaskId) -> Option<&Task<RUNTIME>> {
         self.0.tasks.get(id)
     }
 
     pub(crate) async fn get_cancel_signal(&self) -> Result<(), async_channel::RecvError> {
         self.0.cancel_recv.recv().await
+    }
+
+    pub(crate) fn get_runtime(&self) -> &RUNTIME {
+        &self.0.runtime
     }
 
     // Always drop message if channel is full in try_send_message

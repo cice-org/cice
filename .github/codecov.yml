@@ -23,11 +23,11 @@ component_management:
         - type: project
           target: auto
         - type: patch
-    - component_id: controller  # this is an identifier that should not be changed
-      name: controller  # this is a display name, and can be changed freely
+    - component_id: cice-runtime  # this is an identifier that should not be changed
+      name: runtime # this is a display name, and can be changed freely
       paths:
-        - crates/cice-controllers/**
-    - component_id: recognizer  # this is an identifier that should not be changed
-      name: recognizer  # this is a display name, and can be changed freely
+        - crates/cice-runtimes/**
+    - component_id: cice-action  # this is an identifier that should not be changed
+      name: action  # this is a display name, and can be changed freely
       paths:
-        - crates/cice-recognizers/**
+        - crates/cice-actions/**

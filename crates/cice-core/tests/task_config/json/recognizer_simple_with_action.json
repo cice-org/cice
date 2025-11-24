@@ -1,18 +1,16 @@
 {
   "entry": {
+    "action_name": "simple_action",
     "next_task": ["Next"],
     "interrupt_task": [],
-    "controller_id": "dummy_controller",
-    "recognizer_id": "recognizer_AcceptAll"
+    "timeout_secs": 30,
+    "max_retry": 3
   },
   "Next": {
+    "action_name": "action_with_area",
     "next_task": [],
     "interrupt_task": [],
-    "controller_id": "dummy_controller",
-    "recognizer_id": "recognizer_simple_with_action",
-    "reco":{
-        "area":[0,0,100,100]
-
-    }
+    "timeout_secs": 30,
+    "max_retry": 3
   }
 }

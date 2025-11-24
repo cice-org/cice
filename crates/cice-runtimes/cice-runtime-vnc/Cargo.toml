@@ -1,0 +1,12 @@
+[package]
+name = "cice-runtime-vnc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cice-core = { path = "../../cice-core" }
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+libvnc = { version = "0.1.5", optional = true }
