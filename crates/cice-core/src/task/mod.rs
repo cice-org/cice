@@ -6,7 +6,7 @@ use alloc::{string::String, vec::Vec};
 use futures::FutureExt;
 use snafu::Snafu;
 
-use crate::action::{Action, ActionError, ActionId, ExecError, RecognizeError};
+use crate::action::{Action, ActionError, ActionId, ActionParams, ExecError, RecognizeError};
 use crate::context::Context;
 use crate::message::task::TaskMessage;
 use crate::message::Message;
@@ -24,17 +24,20 @@ pub type TaskId = String;
 /// 5. Next Tasks: After successful execution, the task checks(use `recognize`) for any next tasks to execute. If there is any next task, it will be entered and goto step 1.
 ///
 #[repr(transparent)]
-pub struct Task<'task, RUNTIME: Runtime>(Arc<TaskInner<'task, RUNTIME>>);
+pub struct Task<'task, RUNTIME: Runtime, PARAMS: ActionParams>(
+    Arc<TaskInner<'task, RUNTIME, PARAMS>>,
+);
 
-impl<RUNTIME: Runtime> Clone for Task<'_, RUNTIME> {
+impl<RUNTIME: Runtime, PARAMS: ActionParams> Clone for Task<'_, RUNTIME, PARAMS> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-pub struct TaskInner<'task, RUNTIME: Runtime> {
+pub struct TaskInner<'task, RUNTIME: Runtime, PARAMS> {
     config: TaskConfig,
-    action: &'task dyn Action<RUNTIME>,
+    action: &'task dyn Action<RUNTIME, PARAMS>,
+    params: PARAMS,
 }
 
 pub struct TaskConfig {
@@ -63,26 +66,41 @@ pub enum TaskError {
     TaskTimeOut { id: TaskId },
 }
 
-impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
-    pub fn new(config: TaskConfig, action: &'task impl Action<RUNTIME>) -> Self {
-        Self(Arc::new(TaskInner::new(config, action)))
+impl<'task, RUNTIME: Runtime, PARAMS: ActionParams> Task<'task, RUNTIME, PARAMS> {
+    pub fn new(
+        config: TaskConfig,
+        action: &'task impl Action<RUNTIME, PARAMS>,
+        params: PARAMS,
+    ) -> Self {
+        Self(Arc::new(TaskInner::new(config, action, params)))
     }
 }
 
-impl<'task, RUNTIME: Runtime> TaskInner<'task, RUNTIME> {
-    pub fn new(config: TaskConfig, action: &'task impl Action<RUNTIME>) -> Self {
-        Self { config, action }
+impl<'task, RUNTIME: Runtime, PARAMS: ActionParams> TaskInner<'task, RUNTIME, PARAMS> {
+    pub fn new(
+        config: TaskConfig,
+        action: &'task impl Action<RUNTIME, PARAMS>,
+        params: PARAMS,
+    ) -> Self {
+        Self {
+            config,
+            action,
+            params,
+        }
     }
 }
 
-impl<RUNTIME: Runtime> TaskInner<'_, RUNTIME> {
+impl<RUNTIME: Runtime, PARAMS: ActionParams> TaskInner<'_, RUNTIME, PARAMS> {
     pub(crate) fn config(&self) -> &TaskConfig {
         &self.config
     }
 }
 
-impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
-    async fn try_recognize(&self, context: &Context<'task, RUNTIME>) -> Result<(), RecognizeError> {
+impl<'task, RUNTIME: Runtime, PARAMS: ActionParams> Task<'task, RUNTIME, PARAMS> {
+    async fn try_recognize(
+        &self,
+        context: &Context<'task, RUNTIME, PARAMS>,
+    ) -> Result<(), RecognizeError> {
         Self::send_task_message(
             context,
             TaskMessage::TryRecognize {
@@ -90,7 +108,10 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
             },
         );
 
-        self.0.action.recognize(context.get_runtime()).await?;
+        self.0
+            .action
+            .recognize(context.get_runtime(), &self.0.params)
+            .await?;
 
         Self::send_task_message(
             context,
@@ -102,7 +123,7 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
         Ok(())
     }
 
-    async fn try_exec(&self, context: &Context<'task, RUNTIME>) -> Result<(), ExecError> {
+    async fn try_exec(&self, context: &Context<'task, RUNTIME, PARAMS>) -> Result<(), ExecError> {
         Self::send_task_message(
             context,
             TaskMessage::TryExec {
@@ -110,7 +131,10 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
             },
         );
 
-        self.0.action.exec(context.get_runtime()).await?;
+        self.0
+            .action
+            .exec(context.get_runtime(), &self.0.params)
+            .await?;
 
         Self::send_task_message(
             context,
@@ -122,7 +146,10 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
         Ok(())
     }
 
-    async fn try_run(&self, context: &Context<'task, RUNTIME>) -> Result<TaskResult, ActionError> {
+    async fn try_run(
+        &self,
+        context: &Context<'task, RUNTIME, PARAMS>,
+    ) -> Result<TaskResult, ActionError> {
         self.try_recognize(context)
             .await
             .map_err(Into::<ActionError>::into)?;
@@ -136,7 +163,7 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
 
     pub(crate) async fn run_with_context(
         &self,
-        context: &Context<'task, RUNTIME>,
+        context: &Context<'task, RUNTIME, PARAMS>,
     ) -> Result<TaskResult, TaskError> {
         Self::send_task_message(
             context,
@@ -145,7 +172,7 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
             },
         );
         let inner = self.0.as_ref();
-        let next_tasks: Vec<Task<RUNTIME>> = inner
+        let next_tasks: Vec<Task<RUNTIME, PARAMS>> = inner
             .config
             .next_task
             .iter()
@@ -195,7 +222,7 @@ impl<'task, RUNTIME: Runtime> Task<'task, RUNTIME> {
         self.0.as_ref().config()
     }
 
-    fn send_task_message(context: &Context<RUNTIME>, msg: TaskMessage) {
+    fn send_task_message(context: &Context<RUNTIME, PARAMS>, msg: TaskMessage) {
         if let Err(e) = context.try_send_message(Message::TaskMessage(msg)) {
             log::error!("Failed to send message {e}");
         }

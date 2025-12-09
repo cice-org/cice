@@ -58,7 +58,7 @@ let context = builder.build();
 let runtime = TestRuntime::new();
 let action = SimpleAction::new("action_name");
 let mut builder = ContextBuilder::new(runtime);
-builder.add_task(task_config, &action);
+builder.add_task(task_config, &action, TestParams);  // 添加了 params 参数
 let context = builder.build();
 ```
 
@@ -113,9 +113,9 @@ let simple_action = SimpleAction::new("simple_action");
 // 3. 创建 Builder
 let mut builder = ContextBuilder::new(runtime);
 
-// 4. 添加 Task（直接关联 Action 引用）
+// 4. 添加 Task（直接关联 Action 引用和参数）
 for config in task_configs {
-    builder.add_task(config, &simple_action);
+    builder.add_task(config, &simple_action, TestParams);
 }
 
 // 5. 构建并运行
@@ -132,11 +132,24 @@ let ret = builder.build().run("test".to_string()).await;
 - 运行时查找和匹配
 
 **新架构：**
-- 直接传递 Action 引用
+- 直接传递 Action 引用和参数
 - 编译时类型检查
 - 无需运行时查找
 
-### 2. 更清晰的测试意图
+### 2. 灵活的参数传递
+
+**新特性：**
+- 参数在添加任务时传入，而非在 Action 创建时
+- 支持不同任务使用相同 Action 但不同参数
+- 参数类型通过 `ActionParams` trait 约束
+
+```rust
+// 同一个 Action，不同参数
+builder.add_task(config1, &action, params1);
+builder.add_task(config2, &action, params2);
+```
+
+### 3. 更清晰的测试意图
 
 **旧架构：**
 ```rust
@@ -151,7 +164,7 @@ let ret = builder.build().run("test".to_string()).await;
 "action_name": "simple_action"
 ```
 
-### 3. 更好的代码复用
+### 4. 更好的代码复用
 
 **旧架构：**
 - 每个测试都需要创建和注册多个 Controller 和 Recognizer
@@ -161,7 +174,7 @@ let ret = builder.build().run("test".to_string()).await;
 - 创建一次 Action，多次使用
 - 代码更简洁
 
-### 4. 统一的配置格式
+### 5. 统一的配置格式
 
 所有 JSON 配置文件现在使用统一的格式：
 
@@ -213,7 +226,7 @@ cargo test -p cice-core --test base_task -- --nocapture
   - [ ] 创建 `TestRuntime` 实例
   - [ ] 创建 `Action` 实例（替代 Controller 和 Recognizer）
   - [ ] 使用 `ContextBuilder::new(runtime)` 而非 `ContextBuilder::new()`
-  - [ ] 使用 `builder.add_task(config, &action)` 而非 `builder.add_task(task_data)`
+  - [ ] 使用 `builder.add_task(config, &action, params)` 而非 `builder.add_task(task_data)`
   - [ ] 移除 `add_controller` 和 `add_recognizer` 调用
 
 - [ ] 验证测试
@@ -231,6 +244,8 @@ cargo test -p cice-core --test base_task -- --nocapture
 
 4. **简化的实现**：新架构下的测试 Action 实现更简单，因为不需要区分 Controller 和 Recognizer 的职责。
 
+5. **参数传递**：参数现在在 `add_task` 时传入，Action 的 `recognize` 和 `exec` 方法会接收这些参数。
+
 ## 相关文档
 
 - [Runtime 重构文档](../../../docs/refactor/runtime-refactor.md)
@@ -246,5 +261,6 @@ cargo test -p cice-core --test base_task -- --nocapture
 - ✅ 保持了测试行为的一致性
 - ✅ 简化了测试代码结构
 - ✅ 提高了代码可读性和可维护性
+- ✅ 支持灵活的参数传递机制
 
 所有测试用例现在使用统一的 Runtime-Action 模式，为未来的扩展和维护提供了更好的基础。

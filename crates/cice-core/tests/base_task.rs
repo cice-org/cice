@@ -1,7 +1,7 @@
 use cice_core::context::ContextBuilder;
 use cice_core::message::{task::TaskMessage, Message};
 use cice_core::task::TaskConfig;
-use cice_tests_common::action::{DenyAction, SimpleAction, TestRuntime};
+use cice_tests_common::action::{DenyAction, SimpleAction, TestParams, TestRuntime};
 use cice_tests_common::task::Tasks;
 
 #[tokio::test]
@@ -22,7 +22,7 @@ async fn config() {
 
     // 添加任务
     for config in task_configs {
-        builder.add_task(config, &simple_action);
+        builder.add_task(config, &simple_action, TestParams);
     }
 
     // 构建并运行
@@ -51,8 +51,8 @@ async fn task_sequence() {
     // 添加任务 - 根据 action_name 分配对应的 action
     for config in task_configs {
         match config.action_name.as_str() {
-            "accept_action" => builder.add_task(config, &accept_action),
-            "deny_action" => builder.add_task(config, &deny_action),
+            "accept_action" => builder.add_task(config, &accept_action, TestParams),
+            "deny_action" => builder.add_task(config, &deny_action, TestParams),
             _ => panic!("Unknown action name: {}", config.action_name),
         };
     }
@@ -118,8 +118,8 @@ async fn simple_image() {
     // 添加任务
     for config in task_configs {
         match config.action_name.as_str() {
-            "simple_action" => builder.add_task(config, &simple_action),
-            "simple_image_action" => builder.add_task(config, &simple_image_action),
+            "simple_action" => builder.add_task(config, &simple_action, TestParams),
+            "simple_image_action" => builder.add_task(config, &simple_image_action, TestParams),
             _ => panic!("Unknown action name: {}", config.action_name),
         };
     }
@@ -149,8 +149,8 @@ async fn controller_input_and_output_action() {
     // 添加任务
     for config in task_configs {
         match config.action_name.as_str() {
-            "simple_action" => builder.add_task(config, &simple_action),
-            "input_output_action" => builder.add_task(config, &input_output_action),
+            "simple_action" => builder.add_task(config, &simple_action, TestParams),
+            "input_output_action" => builder.add_task(config, &input_output_action, TestParams),
             _ => panic!("Unknown action name: {}", config.action_name),
         };
     }
@@ -180,8 +180,8 @@ async fn recognizer_simple_with_action() {
     // 添加任务
     for config in task_configs {
         match config.action_name.as_str() {
-            "simple_action" => builder.add_task(config, &simple_action),
-            "action_with_area" => builder.add_task(config, &action_with_area),
+            "simple_action" => builder.add_task(config, &simple_action, TestParams),
+            "action_with_area" => builder.add_task(config, &action_with_area, TestParams),
             _ => panic!("Unknown action name: {}", config.action_name),
         };
     }

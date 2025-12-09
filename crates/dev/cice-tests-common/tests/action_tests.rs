@@ -1,6 +1,8 @@
 use cice_core::context::ContextBuilder;
 use cice_core::task::TaskConfig;
-use cice_tests_common::action::{ConfigurableAction, DenyAction, SimpleAction, TestRuntime};
+use cice_tests_common::action::{
+    ConfigurableAction, DenyAction, SimpleAction, TestParams, TestRuntime,
+};
 use std::time::Duration;
 
 #[tokio::test]
@@ -27,6 +29,7 @@ async fn test_simple_action_sequence() {
             max_retry: 3,
         },
         &action1,
+        TestParams,
     );
 
     builder.add_task(
@@ -39,6 +42,7 @@ async fn test_simple_action_sequence() {
             max_retry: 3,
         },
         &action2,
+        TestParams,
     );
 
     builder.add_task(
@@ -51,6 +55,7 @@ async fn test_simple_action_sequence() {
             max_retry: 3,
         },
         &action3,
+        TestParams,
     );
 
     // 构建并运行
@@ -80,6 +85,7 @@ async fn test_action_with_deny() {
             max_retry: 3,
         },
         &action_accept,
+        TestParams,
     );
 
     builder.add_task(
@@ -92,6 +98,7 @@ async fn test_action_with_deny() {
             max_retry: 3,
         },
         &action_deny,
+        TestParams,
     );
 
     builder.add_task(
@@ -104,6 +111,7 @@ async fn test_action_with_deny() {
             max_retry: 3,
         },
         &action_accept,
+        TestParams,
     );
 
     let context = builder.build();
@@ -132,6 +140,7 @@ async fn test_configurable_action() {
             max_retry: 3,
         },
         &action_success,
+        TestParams,
     );
 
     builder.add_task(
@@ -144,6 +153,7 @@ async fn test_configurable_action() {
             max_retry: 3,
         },
         &action_fail,
+        TestParams,
     );
 
     builder.add_task(
@@ -156,6 +166,7 @@ async fn test_configurable_action() {
             max_retry: 3,
         },
         &action_success,
+        TestParams,
     );
 
     let context = builder.build();

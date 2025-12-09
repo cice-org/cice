@@ -1,8 +1,15 @@
 use cice_action_opencv::{TemplateMatchAction, TemplateMatchConfig};
+use cice_core::action::ActionParams;
 use cice_core::context::ContextBuilder;
 use cice_core::task::TaskConfig;
 use cice_runtime_vnc::VncRuntime;
 use std::time::Duration;
+
+/// 示例用的空参数实现
+#[derive(Clone, Default)]
+struct EmptyParams;
+
+impl ActionParams for EmptyParams {}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -52,6 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_retry: 5,
         },
         &find_button_action,
+        EmptyParams,
     );
 
     // 添加任务：查找应用图标
@@ -65,6 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_retry: 5,
         },
         &find_icon_action,
+        EmptyParams,
     );
 
     // 5. 运行任务

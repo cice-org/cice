@@ -34,12 +34,12 @@ Task → Controller.exec_output()
 │          Context                │
 ├─────────────────────────────────┤
 │  Runtime (提供基础设施)         │
-│  Tasks (直接引用 Action)        │
+│  Tasks (直接引用 Action+参数)   │
 └─────────────────────────────────┘
          │
          ▼
-Task → Action.recognize(runtime)
-    → Action.exec(runtime)
+Task → Action.recognize(runtime, params)
+    → Action.exec(runtime, params)
 ```
 
 ### 关键概念
@@ -48,7 +48,8 @@ Task → Action.recognize(runtime)
 |------|------|------|
 | **Runtime** | 运行时环境 | 提供系统资源和基础设施（如屏幕控制、输入设备等） |
 | **Action** | 行为抽象 | 定义具体的行为逻辑（识别 + 执行） |
-| **Task** | 任务配置 | 关联 Action 和执行配置（超时、重试等） |
+| **ActionParams** | 参数抽象 | 传递给 Action 的参数，在添加任务时指定 |
+| **Task** | 任务配置 | 关联 Action、参数和执行配置（超时、重试等） |
 
 ---
 
@@ -81,6 +82,7 @@ Task → Action.recognize(runtime)
 #### 1. **职责清晰** ✅
 - **Runtime**: 只提供资源和基础设施
 - **Action**: 只定义行为（识别 + 执行）
+- **ActionParams**: 封装 Action 所需的参数
 - **Task**: 只组织执行流程
 
 #### 2. **高度解耦** ✅
@@ -88,17 +90,22 @@ Task → Action.recognize(runtime)
 - 编译时类型检查，类型安全
 - 可以自由组合和复用
 
-#### 3. **易于扩展** ✅
+#### 3. **灵活的参数传递** ✅
+- 参数在添加任务时传入，而非在 Action 创建时
+- 同一个 Action 可以用于不同任务，传递不同参数
+- 参数类型通过泛型约束，类型安全
+
+#### 4. **易于扩展** ✅
 - 只需实现 `Action` trait 即可添加新功能
 - 通过 Runtime 扩展提供新能力
 - 支持 Action 组合模式
 
-#### 4. **更好的测试性** ✅
+#### 5. **更好的测试性** ✅
 - 可以轻松 Mock Runtime
 - Action 可以独立测试
 - 测试代码简洁明了
 
-#### 5. **代码更简洁** ✅
+#### 6. **代码更简洁** ✅
 - 删除 237 行旧代码
 - 新增 150 行核心代码
 - 净减少 509 行代码
@@ -113,12 +120,14 @@ Task → Action.recognize(runtime)
 
 - [x] **cice-core 模块重构**
   - [x] 新增 `Runtime` trait
-  - [x] 新增 `Action` trait
+  - [x] 新增 `Action` trait（支持泛型参数 `PARAMS`）
+  - [x] 新增 `ActionParams` trait
   - [x] 重构 `Context` 和 `Task`
   - [x] 删除 `Controller` 和 `Recognizer`
 
 - [x] **测试框架适配**
   - [x] 创建 `TestRuntime` 实现
+  - [x] 创建 `TestParams` 空参数实现
   - [x] 创建测试用 Action（SimpleAction, DenyAction, ConfigurableAction）
   - [x] 更新所有测试用例
   - [x] 更新 JSON 配置文件
@@ -154,17 +163,24 @@ Task → Action.recognize(runtime)
 pub trait Runtime: Sync + Send {}
 ```
 
+#### ActionParams Trait
+
+```rust
+/// Action 的参数约束
+pub trait ActionParams: Send + Sync {}
+```
+
 #### Action Trait
 
 ```rust
 /// 行为抽象，定义识别和执行逻辑
 #[async_trait]
-pub trait Action<RUNTIME: Runtime>: Send + Sync {
+pub trait Action<RUNTIME: Runtime, PARAMS: ActionParams>: Send + Sync {
     /// 识别阶段：检查前置条件是否满足
-    async fn recognize(&self, runtime: &RUNTIME) -> Result<(), RecognizeError>;
+    async fn recognize(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), RecognizeError>;
 
     /// 执行阶段：执行具体的动作
-    async fn exec(&self, runtime: &RUNTIME) -> Result<(), ExecError>;
+    async fn exec(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), ExecError>;
 }
 ```
 
@@ -180,7 +196,7 @@ let action = SimpleAction::new("my_action");
 // 3. 创建 Context
 let mut builder = ContextBuilder::new(runtime);
 
-// 4. 添加任务
+// 4. 添加任务（包含参数）
 builder.add_task(
     TaskConfig {
         task_name: "task1".to_string(),
@@ -191,6 +207,7 @@ builder.add_task(
         max_retry: 3,
     },
     &action,
+    TestParams,  // 传递参数
 );
 
 // 5. 运行
@@ -238,19 +255,40 @@ impl Recognizer for OpenCVRecognizer {
     }
 }
 
-// 新代码：Action
+// 新代码：Action（支持泛型参数）
 pub struct OpenCVAction { /* ... */ }
 
-impl Action<VncRuntime> for OpenCVAction {
-    async fn recognize(&self, runtime: &VncRuntime) -> Result<(), RecognizeError> {
+impl<P: ActionParams> Action<VncRuntime, P> for OpenCVAction {
+    async fn recognize(&self, runtime: &VncRuntime, params: &P) -> Result<(), RecognizeError> {
         // 识别逻辑
         // 如果未识别到，返回 RecognizeError::UnRecognized
     }
 
-    async fn exec(&self, runtime: &VncRuntime) -> Result<(), ExecError> {
+    async fn exec(&self, runtime: &VncRuntime, params: &P) -> Result<(), ExecError> {
         // 执行逻辑（如果需要）
     }
 }
+```
+
+#### 自定义参数类型
+
+```rust
+use cice_core::action::ActionParams;
+
+#[derive(Clone)]
+pub struct MyParams {
+    pub target_image: String,
+    pub threshold: f32,
+}
+
+impl ActionParams for MyParams {}
+
+// 使用自定义参数
+let params = MyParams {
+    target_image: "button.png".to_string(),
+    threshold: 0.9,
+};
+builder.add_task(config, &action, params);
 ```
 
 ---
@@ -318,6 +356,7 @@ cargo test -p cice-tests-common
 ### 单一职责原则
 - Runtime 只负责提供资源
 - Action 只负责定义行为
+- ActionParams 只负责封装参数
 - Task 只负责组织流程
 
 ### 开闭原则
@@ -331,6 +370,7 @@ cargo test -p cice-tests-common
 ### 组合优于继承
 - Action 可以自由组合
 - 通过 Task 链实现复杂流程
+- 参数与 Action 分离，更灵活
 
 ---
 
@@ -350,10 +390,11 @@ cargo test -p cice-tests-common
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v1.0 | 2025-11-24 | 完成核心模块重构（Phase 1） |
+| v1.1 | 2025-12-09 | 重构参数传递方式，参数在添加任务时传入 |
 | v2.0 | TBD | 完成外部模块迁移（Phase 2） |
 
 ---
 
 **维护者**: Cice Team
-**最后更新**: 2025-11-24
+**最后更新**: 2025-12-09
 **重构提交**: `f4e2615` - refactor(core): basic runtime refactor

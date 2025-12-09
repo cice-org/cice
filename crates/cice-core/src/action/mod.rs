@@ -5,18 +5,19 @@ use crate::runtime::Runtime;
 
 pub type ActionId = String;
 
-/// Action is the behavior that a Task will perform.Basically it contains two stages:
+pub trait ActionParams: Send + Sync {}
+
+/// Action is the behavior that a Task will perform. Basically it contains two stages:
 /// 1. recognize: check whether the precondition of this action is satisfied. Such as whether a specific UI element appears on the screen.
 /// 2. exec: execute the action.
 ///
-/// An action object has two concepts:
-/// 1. implementation: the actual implementation of the action.
-/// 2. parameters: the parameters of the action. For example, a ClickAction may have parameters like the coordinates to click.
+/// An action object has one concept:
+/// implementation: the actual implementation of the action, containing deserializing logic for the parameters.
 ///
 #[async_trait]
-pub trait Action<RUNTIME: Runtime>: Send + Sync {
-    async fn recognize(&self, runtime: &RUNTIME) -> Result<(), RecognizeError>;
-    async fn exec(&self, runtime: &RUNTIME) -> Result<(), ExecError>;
+pub trait Action<RUNTIME: Runtime, PARAMS: ActionParams>: Send + Sync {
+    async fn recognize(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), RecognizeError>;
+    async fn exec(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), ExecError>;
 }
 
 #[derive(Debug, Snafu)]

@@ -42,7 +42,7 @@ let action = TemplateMatchAction::new(...);
 
 // 3. 构建 Context
 let mut builder = ContextBuilder::new(runtime);
-builder.add_task(config, &action);
+builder.add_task(config, &action, params);  // params 为 Action 所需的参数
 
 // 4. 运行
 builder.build().run("entry").await;

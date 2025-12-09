@@ -8,6 +8,7 @@
 
 - 测试用的 Runtime 实现
 - 示例 Action 实现
+- 测试用的参数实现
 - 测试辅助函数和工具
 
 ## 架构适配说明
@@ -26,7 +27,18 @@ use cice_tests_common::action::TestRuntime;
 let runtime = TestRuntime::new();
 ```
 
-#### 2. Action 实现
+#### 2. TestParams
+
+测试用的空参数实现，实现了 `ActionParams` trait：
+
+```rust
+use cice_tests_common::action::TestParams;
+
+// 用于 add_task 时传递参数
+builder.add_task(config, &action, TestParams);
+```
+
+#### 3. Action 实现
 
 提供了多种测试用的 Action 实现：
 
@@ -65,7 +77,7 @@ let action_fail = ConfigurableAction::new("fail", false);
 ```rust
 use cice_core::context::ContextBuilder;
 use cice_core::task::TaskConfig;
-use cice_tests_common::action::{SimpleAction, TestRuntime};
+use cice_tests_common::action::{SimpleAction, TestParams, TestRuntime};
 use std::time::Duration;
 
 #[tokio::test]
@@ -79,7 +91,7 @@ async fn test_simple_task() {
     // 3. 创建 Context Builder
     let mut builder = ContextBuilder::new(runtime);
 
-    // 4. 添加任务
+    // 4. 添加任务（包含参数）
     builder.add_task(
         TaskConfig {
             task_name: "task1".to_string(),
@@ -90,6 +102,7 @@ async fn test_simple_task() {
             max_retry: 3,
         },
         &action,
+        TestParams,  // 传递参数
     );
 
     // 5. 构建并运行
@@ -123,6 +136,7 @@ async fn test_task_chain() {
             max_retry: 3,
         },
         &action1,
+        TestParams,
     );
 
     builder.add_task(
@@ -135,6 +149,7 @@ async fn test_task_chain() {
             max_retry: 3,
         },
         &action2,
+        TestParams,
     );
 
     let context = builder.build();
@@ -168,6 +183,7 @@ async fn test_multiple_branches() {
             max_retry: 3,
         },
         &action_accept,
+        TestParams,
     );
 
     builder.add_task(
@@ -180,6 +196,7 @@ async fn test_multiple_branches() {
             max_retry: 3,
         },
         &action_deny,
+        TestParams,
     );
 
     builder.add_task(
@@ -192,6 +209,7 @@ async fn test_multiple_branches() {
             max_retry: 3,
         },
         &action_accept,
+        TestParams,
     );
 
     let context = builder.build();
@@ -213,7 +231,7 @@ let tasks: Tasks = serde_json::from_str(&json_str).unwrap();
 let task_configs: Vec<TaskConfig> = tasks.into();
 
 for config in task_configs {
-    builder.add_task(config, &action);
+    builder.add_task(config, &action, TestParams);
 }
 ```
 
@@ -256,7 +274,7 @@ builder.add_recognizer((Box::new(MyRecognizer::new()), config));
 ```rust
 let runtime = TestRuntime::new();
 let action = MyAction::new();
-builder.add_task(task_config, &action);
+builder.add_task(task_config, &action, TestParams);
 ```
 
 #### 2. 更新 TaskConfig
@@ -286,11 +304,11 @@ TaskConfig {
 
 #### 3. 实现自定义 Action
 
-如果需要自定义 Action，实现 `Action<TestRuntime>` trait：
+如果需要自定义 Action，实现 `Action<TestRuntime, PARAMS>` trait：
 
 ```rust
 use async_trait::async_trait;
-use cice_core::action::{Action, ExecError, RecognizeError};
+use cice_core::action::{Action, ActionParams, ExecError, RecognizeError};
 use cice_tests_common::action::TestRuntime;
 
 pub struct MyCustomAction {
@@ -298,17 +316,35 @@ pub struct MyCustomAction {
 }
 
 #[async_trait]
-impl Action<TestRuntime> for MyCustomAction {
-    async fn recognize(&self, runtime: &TestRuntime) -> Result<(), RecognizeError> {
+impl<PARAMS: ActionParams> Action<TestRuntime, PARAMS> for MyCustomAction {
+    async fn recognize(&self, runtime: &TestRuntime, params: &PARAMS) -> Result<(), RecognizeError> {
         // 实现识别逻辑
         Ok(())
     }
 
-    async fn exec(&self, runtime: &TestRuntime) -> Result<(), ExecError> {
+    async fn exec(&self, runtime: &TestRuntime, params: &PARAMS) -> Result<(), ExecError> {
         // 实现执行逻辑
         Ok(())
     }
 }
+```
+
+#### 4. 自定义参数类型
+
+如果需要传递自定义参数，实现 `ActionParams` trait：
+
+```rust
+use cice_core::action::ActionParams;
+
+#[derive(Clone)]
+pub struct MyParams {
+    pub value: String,
+}
+
+impl ActionParams for MyParams {}
+
+// 使用自定义参数
+builder.add_task(config, &action, MyParams { value: "test".to_string() });
 ```
 
 ## 运行测试

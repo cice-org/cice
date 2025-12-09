@@ -91,9 +91,9 @@ pub trait Recognizer {
 #### 执行流程
 
 ```
-Task → Action.recognize(runtime) → Action.exec(runtime) → Next Task
-                ↑                           ↑
-                └───────── Runtime ─────────┘
+Task → Action.recognize(runtime, params) → Action.exec(runtime, params) → Next Task
+                ↑                                      ↑
+                └──────────── Runtime + Params ───────────┘
 ```
 
 #### 代码示例（新架构）
@@ -102,17 +102,21 @@ Task → Action.recognize(runtime) → Action.exec(runtime) → Next Task
 // Runtime trait - 轻量级基础设施
 pub trait Runtime: Sync + Send {}
 
+// ActionParams trait - 参数约束
+pub trait ActionParams: Send + Sync {}
+
 // Action trait - 统一的行为抽象
 #[async_trait]
-pub trait Action<RUNTIME: Runtime>: Send + Sync {
-    async fn recognize(&self, runtime: &RUNTIME) -> Result<(), RecognizeError>;
-    async fn exec(&self, runtime: &RUNTIME) -> Result<(), ExecError>;
+pub trait Action<RUNTIME: Runtime, PARAMS: ActionParams>: Send + Sync {
+    async fn recognize(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), RecognizeError>;
+    async fn exec(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), ExecError>;
 }
 
-// Task - 关联 Action 和配置
-pub struct Task<'task, RUNTIME: Runtime> {
+// Task - 关联 Action、参数和配置
+pub struct Task<'task, RUNTIME: Runtime, PARAMS: ActionParams> {
     config: TaskConfig,
-    action: &'task dyn Action<RUNTIME>,
+    action: &'task dyn Action<RUNTIME, PARAMS>,
+    params: PARAMS,
 }
 ```
 
@@ -190,10 +194,11 @@ pub struct ContextBuilder<'task, RUNTIME: Runtime> {
 impl<'task, RUNTIME: Runtime> ContextBuilder<'task, RUNTIME> {
     pub fn new(runtime: RUNTIME) -> Self { /* ... */ }
 
-    pub fn add_task(
+pub fn add_task(
         &mut self,
         task_config: TaskConfig,
-        action: &'task impl Action<RUNTIME>,
+        action: &'task impl Action<RUNTIME, PARAMS>,
+        params: PARAMS,
     ) -> &mut Self { /* ... */ }
 }
 ```
@@ -258,13 +263,13 @@ impl Controller for MyController {
 pub struct MyAction {}
 
 #[async_trait]
-impl<RUNTIME: Runtime> Action<RUNTIME> for MyAction {
-    async fn recognize(&self, runtime: &RUNTIME) -> Result<(), RecognizeError> {
+impl<RUNTIME: Runtime, PARAMS: ActionParams> Action<RUNTIME, PARAMS> for MyAction {
+    async fn recognize(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), RecognizeError> {
         // 检查前置条件
         Ok(())
     }
 
-    async fn exec(&self, runtime: &RUNTIME) -> Result<(), ExecError> {
+    async fn exec(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), ExecError> {
         // 执行动作
         Ok(())
     }
@@ -295,14 +300,14 @@ impl Recognizer for MyRecognizer {
 pub struct MyRecognizeAction {}
 
 #[async_trait]
-impl<RUNTIME: Runtime> Action<RUNTIME> for MyRecognizeAction {
-    async fn recognize(&self, runtime: &RUNTIME) -> Result<(), RecognizeError> {
+impl<RUNTIME: Runtime, PARAMS: ActionParams> Action<RUNTIME, PARAMS> for MyRecognizeAction {
+    async fn recognize(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), RecognizeError> {
         // 识别逻辑
         // 如果识别失败，返回 RecognizeError::UnRecognized
         Ok(())
     }
 
-    async fn exec(&self, runtime: &RUNTIME) -> Result<(), ExecError> {
+    async fn exec(&self, runtime: &RUNTIME, params: &PARAMS) -> Result<(), ExecError> {
         // 执行后续动作（如果需要）
         Ok(())
     }
@@ -326,7 +331,7 @@ context.run("entry".to_string()).await;
 let runtime = MyRuntime::new();
 let mut builder = ContextBuilder::new(runtime);
 let action = MyAction::new();
-builder.add_task(task_config, &action);
+builder.add_task(task_config, &action, params);  // 添加了 params 参数
 let context = builder.build();
 context.run("entry".to_string()).await;
 ```

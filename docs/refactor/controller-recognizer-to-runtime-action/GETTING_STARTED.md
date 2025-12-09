@@ -142,6 +142,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_retry: 5,
         },
         &find_login,
+        params,  // 传递参数
     );
 
     // 添加任务 2: 查找提交按钮
@@ -155,6 +156,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             max_retry: 5,
         },
         &find_submit,
+        params,  // 传递参数
     );
 
     // 4. 运行任务序列
