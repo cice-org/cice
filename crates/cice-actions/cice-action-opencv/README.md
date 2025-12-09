@@ -43,7 +43,7 @@ let action = TemplateMatchAction::new(
 // 3. 使用 Action
 let runtime = MyRuntime;
 let mut builder = ContextBuilder::new(runtime);
-builder.add_task(task_config, &action);
+builder.add_task(task_config, &action, params);  // params 为 Action 所需的参数
 ```
 
 ### 使用 ROI
@@ -131,13 +131,13 @@ async fn main() {
 
 #### Action Trait 实现
 
-- `async fn recognize(&self, runtime: &R) -> Result<(), RecognizeError>`
+- `async fn recognize(&self, runtime: &R, params: &P) -> Result<(), RecognizeError>`
   - 在屏幕截图中查找模板
   - 如果找到（置信度 > threshold），返回 `Ok(())`
   - 如果未找到，返回 `RecognizeError::UnRecognized`
   - 如果出错，返回 `RecognizeError::RecognizeFailed`
 
-- `async fn exec(&self, runtime: &R) -> Result<(), ExecError>`
+- `async fn exec(&self, runtime: &R, params: &P) -> Result<(), ExecError>`
   - 模板匹配不需要执行操作，直接返回 `Ok(())`
 
 ### TemplateMatchConfig

@@ -300,7 +300,7 @@ async fn example() {
     // 3. 创建 Context
     let mut builder = ContextBuilder::new(runtime);
 
-    // 4. 添加任务
+    // 4. 添加任务（包含参数）
     builder.add_task(
         TaskConfig {
             task_name: "task1".to_string(),
@@ -311,6 +311,7 @@ async fn example() {
             max_retry: 3,
         },
         &action,
+        TestParams,  // 传递参数
     );
 
     // 5. 运行
@@ -329,7 +330,7 @@ let tasks: Tasks = serde_json::from_str(json_str).unwrap();
 let task_configs: Vec<TaskConfig> = tasks.into();
 
 for config in task_configs {
-    builder.add_task(config, &action);
+    builder.add_task(config, &action, TestParams);
 }
 ```
 
@@ -343,13 +344,13 @@ use cice_tests_common::action::TestRuntime;
 pub struct MyAction {}
 
 #[async_trait]
-impl Action<TestRuntime> for MyAction {
-    async fn recognize(&self, runtime: &TestRuntime) -> Result<(), RecognizeError> {
+impl<P: ActionParams> Action<TestRuntime, P> for MyAction {
+    async fn recognize(&self, runtime: &TestRuntime, params: &P) -> Result<(), RecognizeError> {
         // 识别逻辑
         Ok(())
     }
 
-    async fn exec(&self, runtime: &TestRuntime) -> Result<(), ExecError> {
+    async fn exec(&self, runtime: &TestRuntime, params: &P) -> Result<(), ExecError> {
         // 执行逻辑
         Ok(())
     }

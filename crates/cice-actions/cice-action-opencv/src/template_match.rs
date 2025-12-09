@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use cice_core::action::{Action, ExecError, RecognizeError};
+use cice_core::action::{Action, ActionParams, ExecError, RecognizeError};
 use cice_core::runtime::ext::ScreenshotExt;
 use opencv::core::{Mat, MatTraitConst};
 use opencv::imgcodecs;
@@ -145,11 +145,12 @@ impl TemplateMatchAction {
 }
 
 #[async_trait]
-impl<R> Action<R> for TemplateMatchAction
+impl<R, P> Action<R, P> for TemplateMatchAction
 where
     R: ScreenshotExt,
+    P: ActionParams,
 {
-    async fn recognize(&self, runtime: &R) -> Result<(), RecognizeError> {
+    async fn recognize(&self, runtime: &R, _params: &P) -> Result<(), RecognizeError> {
         // 获取屏幕截图
         let screenshot = runtime
             .screenshot()
@@ -184,7 +185,7 @@ where
         }
     }
 
-    async fn exec(&self, _runtime: &R) -> Result<(), ExecError> {
+    async fn exec(&self, _runtime: &R, _params: &P) -> Result<(), ExecError> {
         // 模板匹配 Action 只需要识别，不需要执行额外操作
         Ok(())
     }
